@@ -42,4 +42,10 @@ Route::middleware('auth')->group(function () {
 Route::resource('items', ItemController::class)->only(['index', 'show']);
 Route::resource('categories', CategoryController::class)->only(['index', 'show']);
 
+// Rutas de intereses
+Route::get('/interests', [ItemInterestController::class, 'index'])->name('interests.index');
+Route::post('/interests', [ItemInterestController::class, 'store'])->name('interests.store');
+Route::patch('/interests/{interest}', [ItemInterestController::class, 'update'])->name('interests.update');
+
+
 require __DIR__.'/auth.php';
