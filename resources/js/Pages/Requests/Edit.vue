@@ -1,9 +1,9 @@
 <template>
-    <Head title="Publicar una solicitud" />
+    <Head title="Editar solicitud" />
 
     <AuthenticatedLayout>
         <template #header>
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">Publicar una solicitud</h2>
+            <h2 class="font-semibold text-xl text-gray-800 leading-tight">Editar solicitud</h2>
         </template>
 
         <div class="py-12">
@@ -21,7 +21,7 @@
                         <form @submit.prevent="submit">
                             <!-- Título -->
                             <div class="mb-4">
-                                <InputLabel for="title" value="¿Qué necesitas?" />
+                                <InputLabel for="title" value="Título de la solicitud" />
                                 <TextInput
                                     id="title"
                                     type="text"
@@ -29,7 +29,6 @@
                                     v-model="form.title"
                                     required
                                     autofocus
-                                    placeholder="Describe brevemente lo que buscas"
                                 />
                                 <InputError class="mt-2" :message="form.errors.title" />
                             </div>
@@ -60,7 +59,6 @@
                                     class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
                                     rows="4"
                                     required
-                                    placeholder="Describe en detalle qué buscas, para qué lo necesitas, etc."
                                 ></textarea>
                                 <InputError class="mt-2" :message="form.errors.description" />
                             </div>
@@ -91,10 +89,25 @@
                                 <InputError class="mt-2" :message="form.errors.expires_at" />
                             </div>
 
+                            <!-- Estado -->
+                            <div class="mb-4">
+                                <InputLabel for="status" value="Estado" />
+                                <select
+                                    id="status"
+                                    v-model="form.status"
+                                    class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                                >
+                                    <option value="active">Activa</option>
+                                    <option value="fulfilled">Satisfecha</option>
+                                    <option value="cancelled">Cancelada</option>
+                                </select>
+                                <InputError class="mt-2" :message="form.errors.status" />
+                            </div>
+
                             <!-- Botones -->
                             <div class="flex items-center justify-end mt-6">
                                 <Link
-                                    :href="route('requests.index')"
+                                    :href="route('requests.show', request.id)"
                                     class="mr-4 px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
                                 >
                                     Cancelar
@@ -103,7 +116,7 @@
                                     class="ml-4"
                                     :disabled="form.processing"
                                 >
-                                    Publicar solicitud
+                                    Guardar cambios
                                 </PrimaryButton>
                             </div>
                         </form>
@@ -115,7 +128,7 @@
 </template>
 
 <script setup>
-import {Head, Link, useForm} from '@inertiajs/vue3';
+import { Head, Link, useForm } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import TextInput from '@/Components/TextInput.vue';
@@ -124,24 +137,31 @@ import PrimaryButton from '@/Components/PrimaryButton.vue';
 
 // Props recibidas del controlador
 const props = defineProps({
+    request: Object,
     categories: Array
 });
 
+// Preparar fecha de expiración en formato YYYY-MM-DD para el input type="date"
+let formattedExpiresAt = null;
+if (props.request.expires_at) {
+    const date = new Date(props.request.expires_at);
+    formattedExpiresAt = date.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+}
+
 // Formulario de Inertia
 const form = useForm({
-    title: '',
-    category_id: '',
-    description: '',
-    location: '',
-    expires_at: ''
+    title: props.request.title,
+    category_id: props.request.category_id,
+    description: props.request.description,
+    location: props.request.location || '',
+    expires_at: formattedExpiresAt,
+    status: props.request.status
 });
 
 // Envío del formulario
 const submit = () => {
-    form.post(route('requests.store'), {
-        onSuccess: () => {
-            form.reset();
-        },
+    form.patch(route('requests.update', props.request.id), {
+        preserveScroll: true
     });
 };
 </script>

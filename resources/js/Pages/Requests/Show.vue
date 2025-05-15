@@ -9,16 +9,16 @@
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                 <!-- Mensajes de alerta -->
-                <div v-if="$page.props.flash.success" class="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
-                    {{ $page.props.flash.success }}
+                <div v-if="flash('success')" class="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+                    {{ flash('success') }}
                 </div>
-                <div v-if="$page.props.flash.error" class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-                    {{ $page.props.flash.error }}
+                <div v-if="flash('error')" class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                    {{ flash('error') }}
                 </div>
 
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6 text-gray-900">
-                        <div class="mb-4">
+                        <div class="mb-6">
                             <h1 class="text-2xl font-bold mb-2">{{ request.title }}</h1>
                             <div class="flex flex-wrap gap-2 mb-4">
                                 <p class="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">
@@ -43,8 +43,12 @@
                                 Ubicación: {{ request.location }}
                             </p>
 
+                            <p v-if="request.expires_at" class="mb-2 text-sm text-amber-600">
+                                Expira el: {{ formatDateFull(request.expires_at) }}
+                            </p>
+
                             <p class="text-sm text-gray-500 mb-4">
-                                Publicado el {{ formatDate(request.created_at) }}
+                                Publicado el {{ formatDateFull(request.created_at) }}
                             </p>
 
                             <div class="mb-6 p-4 bg-gray-50 rounded-lg">
@@ -74,6 +78,12 @@
                                         class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
                                     >
                                         Cancelar solicitud
+                                    </button>
+                                    <button
+                                        @click="confirmDelete = true"
+                                        class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                                    >
+                                        Eliminar
                                     </button>
                                 </div>
                             </div>
@@ -113,7 +123,7 @@
                         <!-- Mensaje para usuarios que quieran ayudar -->
                         <div v-if="!isOwner && request.status === 'active'" class="mt-8 p-4 bg-blue-50 rounded-lg border border-blue-200">
                             <h3 class="font-semibold mb-2">¿Puedes ayudar con esta solicitud?</h3>
-                            <p class="mb-4">Si tienes un item que crees que podría satisfacer esta solicitud, puedes contactar al solicitante o publicar tu item en la plataforma.</p>
+                            <p class="mb-4">Si tienes un objeto que crees que podría satisfacer esta solicitud, puedes contactar al solicitante o publicar tu item en la plataforma.</p>
                             <Link
                                 :href="route('items.create')"
                                 class="inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
@@ -125,10 +135,33 @@
                 </div>
             </div>
         </div>
+
+        <!-- Modal de confirmación para eliminar -->
+        <div v-if="confirmDelete" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white p-6 rounded-lg max-w-md w-full">
+                <h3 class="text-lg font-bold mb-4">¿Estás seguro de que quieres eliminar esta solicitud?</h3>
+                <p class="mb-4">Esta acción no se puede deshacer.</p>
+                <div class="flex justify-end space-x-4">
+                    <button
+                        @click="confirmDelete = false"
+                        class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+                    >
+                        Cancelar
+                    </button>
+                    <button
+                        @click="deleteRequest"
+                        class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                    >
+                        Eliminar
+                    </button>
+                </div>
+            </div>
+        </div>
     </AuthenticatedLayout>
 </template>
 
 <script setup>
+import { ref } from 'vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 
@@ -138,8 +171,11 @@ const props = defineProps({
     isOwner: Boolean
 });
 
-// Formatear la fecha
-const formatDate = (dateString) => {
+const confirmDelete = ref(false);
+
+// Formatear fecha completa
+const formatDateFull = (dateString) => {
+    if (!dateString) return '';
     const date = new Date(dateString);
     return date.toLocaleDateString('es-ES', {
         year: 'numeric',
@@ -160,6 +196,13 @@ const updateStatus = (status) => {
         status: status
     }).patch(route('requests.update', props.request.id), {
         preserveScroll: true
+    });
+};
+
+// Eliminar solicitud
+const deleteRequest = () => {
+    useForm({}).delete(route('requests.destroy', props.request.id), {
+        onSuccess: () => window.location = route('requests.index')
     });
 };
 </script>

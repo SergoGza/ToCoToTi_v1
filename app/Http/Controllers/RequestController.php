@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Request as ItemRequest;
 use App\Models\Category;
+use App\Models\Item;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -11,7 +12,7 @@ use Inertia\Inertia;
 class RequestController extends Controller
 {
     /**
-     * Display a listing of the resource with search and filtering.
+     * Display a listing of the resource.
      */
     public function index(Request $request)
     {
@@ -66,8 +67,6 @@ class RequestController extends Controller
         ]);
     }
 
-
-
     /**
      * Show the form for creating a new resource.
      */
@@ -90,6 +89,7 @@ class RequestController extends Controller
             'description' => 'required|string',
             'category_id' => 'required|exists:categories,id',
             'location' => 'nullable|string|max:255',
+            'expires_at' => 'nullable|date|after:now',
         ]);
 
         $itemRequest = new ItemRequest();
@@ -98,16 +98,12 @@ class RequestController extends Controller
         $itemRequest->description = $request->description;
         $itemRequest->category_id = $request->category_id;
         $itemRequest->location = $request->location;
+        $itemRequest->expires_at = $request->expires_at;
         $itemRequest->status = 'active';
-
-        // Si se proporciona una fecha de expiración
-        if ($request->expires_at) {
-            $itemRequest->expires_at = $request->expires_at;
-        }
 
         $itemRequest->save();
 
-        return redirect()->route('requests.index');
+        return redirect()->route('requests.index')->with('success', 'Solicitud creada correctamente');
     }
 
     /**
@@ -119,7 +115,7 @@ class RequestController extends Controller
         $request->load(['user', 'category']);
 
         // Verificamos si hay items que coincidan con la categoría de la solicitud
-        $matchingItems = \App\Models\Item::where('category_id', $request->category_id)
+        $matchingItems = Item::where('category_id', $request->category_id)
             ->where('status', 'available')
             ->where('user_id', '!=', Auth::id()) // No mostrar los propios items del usuario
             ->with('user')
@@ -140,7 +136,7 @@ class RequestController extends Controller
     {
         // Verificar que el usuario actual es el propietario
         if (Auth::id() !== $request->user_id) {
-            return redirect()->route('requests.index');
+            return redirect()->route('requests.index')->with('error', 'No tienes permiso para editar esta solicitud');
         }
 
         $categories = Category::all();
@@ -158,7 +154,7 @@ class RequestController extends Controller
     {
         // Verificar que el usuario actual es el propietario
         if (Auth::id() !== $request->user_id) {
-            return redirect()->route('requests.index');
+            return redirect()->route('requests.index')->with('error', 'No tienes permiso para editar esta solicitud');
         }
 
         $httpRequest->validate([
@@ -166,6 +162,7 @@ class RequestController extends Controller
             'description' => 'required|string',
             'category_id' => 'required|exists:categories,id',
             'location' => 'nullable|string|max:255',
+            'expires_at' => 'nullable|date',
             'status' => 'sometimes|in:active,fulfilled,cancelled'
         ]);
 
@@ -173,6 +170,7 @@ class RequestController extends Controller
         $request->description = $httpRequest->description;
         $request->category_id = $httpRequest->category_id;
         $request->location = $httpRequest->location;
+        $request->expires_at = $httpRequest->expires_at;
 
         // Actualizar estado si se proporciona
         if ($httpRequest->has('status')) {
@@ -181,7 +179,7 @@ class RequestController extends Controller
 
         $request->save();
 
-        return redirect()->route('requests.show', $request->id);
+        return redirect()->route('requests.show', $request->id)->with('success', 'Solicitud actualizada correctamente');
     }
 
     /**
@@ -191,12 +189,12 @@ class RequestController extends Controller
     {
         // Verificar que el usuario actual es el propietario
         if (Auth::id() !== $request->user_id) {
-            return redirect()->route('requests.index');
+            return redirect()->route('requests.index')->with('error', 'No tienes permiso para eliminar esta solicitud');
         }
 
         $request->delete();
 
-        return redirect()->route('requests.index');
+        return redirect()->route('requests.index')->with('success', 'Solicitud eliminada correctamente');
     }
 
     /**

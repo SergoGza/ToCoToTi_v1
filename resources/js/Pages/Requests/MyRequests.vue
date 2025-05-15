@@ -16,6 +16,14 @@
 
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+                <!-- Mensajes de alerta -->
+                <div v-if="flash('success')" class="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+                    {{ flash('success') }}
+                </div>
+                <div v-if="flash('error')" class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                    {{ flash('error') }}
+                </div>
+
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6 text-gray-900">
                         <!-- Lista de solicitudes -->
@@ -94,7 +102,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import Pagination from '@/Components/Pagination.vue';
 
 // Props
-defineProps({
+const props = defineProps({
     requests: Object
 });
 
@@ -109,10 +117,9 @@ const statusText = (status) => {
     return statusMap[status] || status;
 };
 
-// Formatear la fecha de creación
+// Formatear fecha
 const formatDate = (dateString) => {
     const date = new Date(dateString);
-    // Formatear como "hace X días" o fecha completa si es más antigua
     const now = new Date();
     const diffTime = Math.abs(now - date);
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));

@@ -16,6 +16,14 @@
 
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+                <!-- Mensajes de alerta -->
+                <div v-if="flash('success')" class="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+                    {{ flash('success') }}
+                </div>
+                <div v-if="flash('error')" class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                    {{ flash('error') }}
+                </div>
+
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
                     <div class="p-6">
                         <!-- Panel de búsqueda y filtros -->
@@ -167,6 +175,7 @@ import TextInput from '@/Components/TextInput.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 
+// Props
 const props = defineProps({
     requests: Object,
     filters: Object,
