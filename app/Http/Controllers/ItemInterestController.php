@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Item;
 use App\Models\ItemInterest;
+use App\Models\Item;
+use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -11,22 +12,54 @@ use Inertia\Inertia;
 class ItemInterestController extends Controller
 {
     /**
-     * Muestra los intereses del usuario autenticado.
+     * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $interests = ItemInterest::with(['item.user', 'item.category'])
-            ->where('user_id', Auth::id())
-            ->latest()
-            ->paginate(10);
+        $query = ItemInterest::with(['item.user', 'item.category'])
+            ->where('user_id', Auth::id());
+
+        // Filtro por estado
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        // Filtro por categoría de item
+        if ($request->filled('category')) {
+            $query->whereHas('item', function($q) use ($request) {
+                $q->where('category_id', $request->category);
+            });
+        }
+
+        // Búsqueda por título o descripción del item
+        if ($request->filled('search')) {
+            $searchTerm = '%' . $request->search . '%';
+            $query->whereHas('item', function($q) use ($searchTerm) {
+                $q->where('title', 'like', $searchTerm)
+                    ->orWhere('description', 'like', $searchTerm);
+            });
+        }
+
+        // Ordenación
+        $query->latest();
+
+        $interests = $query->paginate(10)->withQueryString();
+
+        $categories = Category::all();
 
         return Inertia::render('Interests/Index', [
-            'interests' => $interests
+            'interests' => $interests,
+            'filters' => [
+                'search' => $request->search,
+                'category' => $request->category,
+                'status' => $request->status
+            ],
+            'categories' => $categories
         ]);
     }
 
     /**
-     * Almacena un nuevo interés en un item.
+     * Store a newly created resource in storage.
      */
     public function store(Request $request)
     {
@@ -62,7 +95,7 @@ class ItemInterestController extends Controller
     }
 
     /**
-     * Actualiza el estado de un interés (para el propietario del item).
+     * Update the specified resource in storage.
      */
     public function update(Request $request, ItemInterest $interest)
     {

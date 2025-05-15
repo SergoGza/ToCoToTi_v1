@@ -11,7 +11,8 @@ use App\Models\Request as ItemRequest; // Usamos un alias para evitar conflicto 
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
-// Ruta principal - podemos personalizarla para mostrar productos recientes
+
+// Ruta principal
 Route::get('/', function () {
     return Inertia::render('Welcome', [
         'canLogin' => Route::has('login'),
@@ -36,6 +37,10 @@ Route::get('/dashboard', function () {
     ]);
 })->middleware(['auth', 'verified'])->name('dashboard');
 
+// Rutas públicas
+Route::resource('items', ItemController::class)->only(['index', 'show']);
+Route::resource('categories', CategoryController::class)->only(['index', 'show']);
+
 // Rutas protegidas - requieren autenticación
 Route::middleware('auth')->group(function () {
     // Perfil de usuario
@@ -43,25 +48,20 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // Rutas para nuestros recursos que requieren autenticación
+    // Rutas para items que requieren autenticación
     Route::resource('items', ItemController::class)->except(['index', 'show']);
+
+    // Rutas de ofertas
     Route::resource('offers', OfferController::class);
+
+    // Rutas de solicitudes
     Route::resource('requests', RequestController::class);
-    Route::resource('interests', ItemInterestController::class);
+    Route::get('/my-requests', [RequestController::class, 'myRequests'])->name('requests.my');
+
+    // Rutas de intereses
+    Route::get('/interests', [ItemInterestController::class, 'index'])->name('interests.index');
+    Route::post('/interests', [ItemInterestController::class, 'store'])->name('interests.store');
+    Route::patch('/interests/{interest}', [ItemInterestController::class, 'update'])->name('interests.update');
 });
-
-// Rutas públicas
-Route::resource('items', ItemController::class)->only(['index', 'show']);
-Route::resource('categories', CategoryController::class)->only(['index', 'show']);
-
-// Rutas de intereses
-Route::get('/interests', [ItemInterestController::class, 'index'])->name('interests.index');
-Route::post('/interests', [ItemInterestController::class, 'store'])->name('interests.store');
-Route::patch('/interests/{interest}', [ItemInterestController::class, 'update'])->name('interests.update');
-
-// Rutas de solicitudes
-Route::resource('requests', RequestController::class);
-Route::get('/my-requests', [RequestController::class, 'myRequests'])->name('requests.my');
-
 
 require __DIR__.'/auth.php';

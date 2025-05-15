@@ -1,5 +1,7 @@
 import '../css/app.css';
 import './bootstrap';
+import { usePage } from '@inertiajs/vue3';
+
 
 import { createInertiaApp } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
@@ -24,4 +26,13 @@ createInertiaApp({
     progress: {
         color: '#4B5563',
     },
-});
+})
+
+// Helper global para acceder a los mensajes flash de forma segura
+window.flash = function(type) {
+    const page = usePage();
+    if (page.props.flash && page.props.flash[type]) {
+        return page.props.flash[type];
+    }
+    return null;
+};

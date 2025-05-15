@@ -11,19 +11,62 @@ use Inertia\Inertia;
 class RequestController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Display a listing of the resource with search and filtering.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $requests = ItemRequest::with(['user', 'category'])
-            ->where('status', 'active')
-            ->latest()
-            ->paginate(10);
+        $query = ItemRequest::with(['user', 'category'])
+            ->where('status', 'active');
+
+        // Filtro por categoría
+        if ($request->filled('category')) {
+            $query->where('category_id', $request->category);
+        }
+
+        // Búsqueda por término
+        if ($request->filled('search')) {
+            $searchTerm = '%' . $request->search . '%';
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('title', 'like', $searchTerm)
+                    ->orWhere('description', 'like', $searchTerm)
+                    ->orWhere('location', 'like', $searchTerm);
+            });
+        }
+
+        // Filtro por ubicación
+        if ($request->filled('location')) {
+            $query->where('location', 'like', '%' . $request->location . '%');
+        }
+
+        // Ordenar resultados
+        $sortField = $request->input('sort_by', 'created_at');
+        $sortOrder = $request->input('sort_order', 'desc');
+
+        $allowedSortFields = ['title', 'created_at'];
+        if (in_array($sortField, $allowedSortFields)) {
+            $query->orderBy($sortField, $sortOrder);
+        } else {
+            $query->latest(); // Orden por defecto
+        }
+
+        $requests = $query->paginate(9)->withQueryString();
+
+        $categories = Category::all();
 
         return Inertia::render('Requests/Index', [
-            'requests' => $requests
+            'requests' => $requests,
+            'filters' => [
+                'search' => $request->search,
+                'category' => $request->category,
+                'location' => $request->location,
+                'sort_by' => $sortField,
+                'sort_order' => $sortOrder
+            ],
+            'categories' => $categories
         ]);
     }
+
+
 
     /**
      * Show the form for creating a new resource.

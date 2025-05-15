@@ -8,6 +8,70 @@
 
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
+                    <div class="p-6">
+                        <!-- Panel de búsqueda y filtros -->
+                        <div class="mb-6">
+                            <form @submit.prevent="search">
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <!-- Búsqueda por término -->
+                                    <div>
+                                        <InputLabel for="search" value="Buscar" />
+                                        <TextInput
+                                            id="search"
+                                            type="text"
+                                            class="mt-1 block w-full"
+                                            v-model="filters.search"
+                                            placeholder="Buscar en título o descripción..."
+                                        />
+                                    </div>
+
+                                    <!-- Filtro por categoría -->
+                                    <div>
+                                        <InputLabel for="category" value="Categoría" />
+                                        <select
+                                            id="category"
+                                            v-model="filters.category"
+                                            class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                                        >
+                                            <option value="">Todas las categorías</option>
+                                            <option v-for="category in categories" :key="category.id" :value="category.id">
+                                                {{ category.name }}
+                                            </option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Filtro por estado -->
+                                    <div>
+                                        <InputLabel for="status" value="Estado" />
+                                        <select
+                                            id="status"
+                                            v-model="filters.status"
+                                            class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                                        >
+                                            <option value="">Todos los estados</option>
+                                            <option value="pending">Pendiente</option>
+                                            <option value="accepted">Aceptado</option>
+                                            <option value="rejected">Rechazado</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="flex justify-end mt-4">
+                                    <div class="flex space-x-2">
+                                        <PrimaryButton type="submit">
+                                            Buscar
+                                        </PrimaryButton>
+                                        <SecondaryButton type="button" @click="resetFilters">
+                                            Limpiar filtros
+                                        </SecondaryButton>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6 text-gray-900">
                         <div v-if="interests.data.length" class="space-y-6">
@@ -89,14 +153,43 @@
 </template>
 
 <script setup>
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
+import { ref } from 'vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import Pagination from '@/Components/Pagination.vue';
+import InputLabel from '@/Components/InputLabel.vue';
+import TextInput from '@/Components/TextInput.vue';
+import PrimaryButton from '@/Components/PrimaryButton.vue';
+import SecondaryButton from '@/Components/SecondaryButton.vue';
 
 // Props
-defineProps({
-    interests: Object
+const props = defineProps({
+    interests: Object,
+    filters: Object,
+    categories: Array
 });
+
+// Copiar los filtros a un ref para poder modificarlos
+const filters = ref({...props.filters});
+
+// Método para realizar la búsqueda
+const search = () => {
+    router.get(route('interests.index'), filters.value, {
+        preserveState: true,
+        preserveScroll: true,
+        only: ['interests']
+    });
+};
+
+// Método para reiniciar filtros
+const resetFilters = () => {
+    filters.value = {
+        search: '',
+        category: '',
+        status: ''
+    };
+    search();
+};
 
 // Convertir el estado a texto legible
 const statusText = (status) => {
