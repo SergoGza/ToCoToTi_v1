@@ -1,4 +1,3 @@
-// app/Models/ItemInterest.php
 <?php
 
 namespace App\Models;

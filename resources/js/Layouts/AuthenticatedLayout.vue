@@ -16,6 +16,24 @@ const showingNavigationDropdown = ref(false);
             <nav
                 class="border-b border-gray-100 bg-white"
             >
+
+                <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
+                    <NavLink :href="route('dashboard')" :active="route().current('dashboard')">
+                        Dashboard
+                    </NavLink>
+                    <NavLink :href="route('items.index')" :active="route().current('items.*')">
+                        Items
+                    </NavLink>
+                    <NavLink :href="route('requests.index')" :active="route().current('requests.index')">
+                        Solicitudes
+                    </NavLink>
+                    <NavLink :href="route('requests.my')" :active="route().current('requests.my')">
+                        Mis Solicitudes
+                    </NavLink>
+                    <NavLink :href="route('interests.index')" :active="route().current('interests.*')">
+                        Mis Intereses
+                    </NavLink>
+                </div>
                 <!-- Primary Navigation Menu -->
                 <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <div class="flex h-16 justify-between">
