@@ -8,6 +8,7 @@ use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
+use App\Services\NotificationService;
 
 class ItemInterestController extends Controller
 {
@@ -91,6 +92,9 @@ class ItemInterestController extends Controller
         $interest->status = 'pending';
         $interest->save();
 
+        // Crear notificación para el propietario del item
+        NotificationService::createInterestReceivedNotification($interest);
+
         return redirect()->back()->with('success', 'Has mostrado interés en este item. El propietario será notificado.');
     }
 
@@ -108,6 +112,10 @@ class ItemInterestController extends Controller
             'status' => 'required|in:accepted,rejected',
         ]);
 
+        // Guardar el estado anterior para la notificación
+        $oldStatus = $interest->status;
+
+        // Actualizar el estado
         $interest->status = $request->status;
         $interest->save();
 
@@ -115,8 +123,57 @@ class ItemInterestController extends Controller
         if ($request->status === 'accepted') {
             $interest->item->status = 'reserved';
             $interest->item->save();
+
+            // Notificar a otros usuarios interesados que el item ha sido reservado
+            NotificationService::createItemReservedNotification($interest->item);
         }
 
+        // Crear notificación para el usuario interesado
+        NotificationService::createInterestStatusNotification($interest, $oldStatus);
+
         return redirect()->back()->with('success', 'Estado de interés actualizado correctamente.');
+    }
+
+    /**
+     * Display a listing of received interests.
+     */
+    public function receivedInterests(Request $request)
+    {
+        // Obtener todos los ítems del usuario actual
+        $items = Item::where('user_id', Auth::id())->pluck('id');
+
+        // Construir la consulta para obtener intereses en esos ítems
+        $query = ItemInterest::whereIn('item_id', $items)
+            ->with(['user', 'item.category']);
+
+        // Filtro por estado
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        // Filtro por ítem específico
+        if ($request->filled('item')) {
+            $query->where('item_id', $request->item);
+        }
+
+        // Ordenación
+        $query->latest();
+
+        $interests = $query->paginate(10)->withQueryString();
+
+        // Obtener lista de items únicos para el filtro
+        $uniqueItems = Item::where('user_id', Auth::id())
+            ->whereHas('interests')
+            ->select('id', 'title')
+            ->get();
+
+        return Inertia::render('Interests/Received', [
+            'interests' => $interests,
+            'filters' => [
+                'status' => $request->status,
+                'item' => $request->item
+            ],
+            'uniqueItems' => $uniqueItems
+        ]);
     }
 }

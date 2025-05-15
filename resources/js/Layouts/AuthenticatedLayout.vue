@@ -5,6 +5,7 @@ import Dropdown from '@/Components/Dropdown.vue';
 import DropdownLink from '@/Components/DropdownLink.vue';
 import NavLink from '@/Components/NavLink.vue';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink.vue';
+import NotificationDropdown from '@/Components/NotificationDropdown.vue';
 import { Link } from '@inertiajs/vue3';
 
 const showingNavigationDropdown = ref(false);
@@ -16,24 +17,6 @@ const showingNavigationDropdown = ref(false);
             <nav
                 class="border-b border-gray-100 bg-white"
             >
-
-                <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
-                    <NavLink :href="route('dashboard')" :active="route().current('dashboard')">
-                        Dashboard
-                    </NavLink>
-                    <NavLink :href="route('items.index')" :active="route().current('items.*')">
-                        Items
-                    </NavLink>
-                    <NavLink :href="route('requests.index')" :active="route().current('requests.index')">
-                        Solicitudes
-                    </NavLink>
-                    <NavLink :href="route('requests.my')" :active="route().current('requests.my')">
-                        Mis Solicitudes
-                    </NavLink>
-                    <NavLink :href="route('interests.index')" :active="route().current('interests.*')">
-                        Mis Intereses
-                    </NavLink>
-                </div>
                 <!-- Primary Navigation Menu -->
                 <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <div class="flex h-16 justify-between">
@@ -57,10 +40,31 @@ const showingNavigationDropdown = ref(false);
                                 >
                                     Dashboard
                                 </NavLink>
+                                <NavLink :href="route('items.index')" :active="route().current('items.*')">
+                                    Items
+                                </NavLink>
+                                <NavLink :href="route('requests.index')" :active="route().current('requests.index')">
+                                    Solicitudes
+                                </NavLink>
+                                <NavLink :href="route('requests.my')" :active="route().current('requests.my')">
+                                    Mis Solicitudes
+                                </NavLink>
+                                <NavLink :href="route('interests.index')" :active="route().current('interests.index')">
+                                    Mis Intereses
+                                </NavLink>
+                                <NavLink :href="route('interests.received')" :active="route().current('interests.received')">
+                                    Intereses Recibidos
+                                </NavLink>
+                                <NavLink :href="route('messages.index')" :active="route().current('messages.*')">
+                                    Mensajes
+                                </NavLink>
                             </div>
                         </div>
 
                         <div class="hidden sm:ms-6 sm:flex sm:items-center">
+                            <!-- Notificaciones Dropdown -->
+                            <NotificationDropdown />
+
                             <!-- Settings Dropdown -->
                             <div class="relative ms-3">
                                 <Dropdown align="right" width="48">
@@ -163,6 +167,48 @@ const showingNavigationDropdown = ref(false);
                             :active="route().current('dashboard')"
                         >
                             Dashboard
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            :href="route('items.index')"
+                            :active="route().current('items.*')"
+                        >
+                            Items
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            :href="route('requests.index')"
+                            :active="route().current('requests.index')"
+                        >
+                            Solicitudes
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            :href="route('requests.my')"
+                            :active="route().current('requests.my')"
+                        >
+                            Mis Solicitudes
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            :href="route('interests.index')"
+                            :active="route().current('interests.*')"
+                        >
+                            Mis Intereses
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            :href="route('interests.received')"
+                            :active="route().current('interests.received')"
+                        >
+                            Intereses Recibidos
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            :href="route('messages.index')"
+                            :active="route().current('messages.*')"
+                        >
+                            Mensajes
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            :href="route('notifications.index')"
+                            :active="route().current('notifications.index')"
+                        >
+                            Notificaciones
                         </ResponsiveNavLink>
                     </div>
 

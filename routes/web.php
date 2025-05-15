@@ -6,6 +6,8 @@ use App\Http\Controllers\OfferController;
 use App\Http\Controllers\RequestController;
 use App\Http\Controllers\ItemInterestController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\MessageController;
 use App\Models\Item;
 use App\Models\Request as ItemRequest; // Usamos un alias para evitar conflicto con la clase Request de HTTP
 use Illuminate\Foundation\Application;
@@ -50,6 +52,7 @@ Route::middleware('auth')->group(function () {
 
     // Rutas para items que requieren autenticación
     Route::resource('items', ItemController::class)->except(['index', 'show']);
+    Route::patch('/items/{item}/status', [ItemController::class, 'updateStatus'])->name('items.updateStatus');
 
     // Rutas de ofertas
     Route::resource('offers', OfferController::class);
@@ -62,6 +65,21 @@ Route::middleware('auth')->group(function () {
     Route::get('/interests', [ItemInterestController::class, 'index'])->name('interests.index');
     Route::post('/interests', [ItemInterestController::class, 'store'])->name('interests.store');
     Route::patch('/interests/{interest}', [ItemInterestController::class, 'update'])->name('interests.update');
+    Route::get('/received-interests', [ItemInterestController::class, 'receivedInterests'])->name('interests.received');
+
+    // Rutas de notificaciones
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::patch('/notifications/{notification}/mark-as-read', [NotificationController::class, 'markAsRead'])->name('notifications.markAsRead');
+    Route::post('/notifications/mark-all-as-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.markAllAsRead');
+    Route::get('/api/unread-notifications', [NotificationController::class, 'getUnreadNotifications'])->name('api.unreadNotifications');
+
+    // Rutas para mensajes
+    Route::get('/messages', [MessageController::class, 'index'])->name('messages.index');
+    Route::get('/messages/{contact}', [MessageController::class, 'show'])->name('messages.show');
+    Route::post('/messages', [MessageController::class, 'store'])->name('messages.store');
+    Route::post('/messages/{contact}/read', [MessageController::class, 'markAsRead'])->name('messages.read');
+    Route::get('/items/{item}/message', [MessageController::class, 'createFromItem'])->name('messages.fromItem');
+    Route::get('/interests/{interest}/message', [MessageController::class, 'createFromInterest'])->name('messages.fromInterest');
 });
 
 require __DIR__.'/auth.php';
