@@ -1,3 +1,4 @@
+<!-- resources/js/Pages/Messages/Show.vue -->
 <template>
     <Head :title="'Conversación con ' + contact.name" />
 
@@ -139,6 +140,18 @@
                                         <!-- Contenido del mensaje -->
                                         <p class="text-gray-800">{{ message.content }}</p>
 
+                                        <!-- Imágenes adjuntas -->
+                                        <div v-if="message.images && message.images.length" class="mt-2 grid grid-cols-2 gap-2">
+                                            <div v-for="(image, imgIndex) in message.images" :key="imgIndex" class="relative">
+                                                <img
+                                                    :src="'/storage/' + image"
+                                                    class="rounded max-h-32 max-w-full object-cover cursor-pointer"
+                                                    @click="openImagePreview(image)"
+                                                    alt="Imagen adjunta"
+                                                >
+                                            </div>
+                                        </div>
+
                                         <!-- Referencias a ítems o intereses si existen -->
                                         <div v-if="message.item_id || (message.interest && message.interest.item_id)" class="mt-1 p-1 bg-gray-200 rounded text-xs text-gray-600">
                                             Sobre: {{ message.item ? message.item.title : message.interest.item.title }}
@@ -157,6 +170,18 @@
                                     >
                                         <!-- Contenido del mensaje -->
                                         <p class="text-gray-800">{{ message.content }}</p>
+
+                                        <!-- Imágenes adjuntas -->
+                                        <div v-if="message.images && message.images.length" class="mt-2 grid grid-cols-2 gap-2">
+                                            <div v-for="(image, imgIndex) in message.images" :key="imgIndex" class="relative">
+                                                <img
+                                                    :src="'/storage/' + image"
+                                                    class="rounded max-h-32 max-w-full object-cover cursor-pointer"
+                                                    @click="openImagePreview(image)"
+                                                    alt="Imagen adjunta"
+                                                >
+                                            </div>
+                                        </div>
 
                                         <!-- Referencias a ítems o intereses si existen -->
                                         <div v-if="message.item_id || (message.interest && message.interest.item_id)" class="mt-1 p-1 bg-blue-200 rounded text-xs text-gray-600">
@@ -179,7 +204,7 @@
 
                         <!-- Formulario para enviar mensaje -->
                         <div class="border-t p-4">
-                            <form @submit.prevent="sendMessage">
+                            <form @submit.prevent="sendMessage" enctype="multipart/form-data">
                                 <div class="mb-3">
                                     <textarea
                                         v-model="messageForm.content"
@@ -224,6 +249,40 @@
                                     </div>
                                 </div>
 
+                                <!-- Adjuntar imágenes -->
+                                <div class="mb-3">
+                                    <div class="flex items-center space-x-2">
+                                        <label class="bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded text-sm cursor-pointer">
+                                            <input
+                                                type="file"
+                                                id="images"
+                                                ref="fileInput"
+                                                multiple
+                                                accept="image/*"
+                                                class="hidden"
+                                                @change="handleFileSelect"
+                                            >
+                                            Adjuntar imágenes
+                                        </label>
+                                        <span v-if="selectedFiles.length > 0" class="text-sm text-gray-600">
+                                            {{ selectedFiles.length }} imagen(es) seleccionada(s)
+                                        </span>
+                                    </div>
+
+                                    <!-- Vista previa de imágenes -->
+                                    <div v-if="imagePreviewUrls.length > 0" class="mt-2 grid grid-cols-3 gap-2">
+                                        <div v-for="(url, index) in imagePreviewUrls" :key="index" class="relative">
+                                            <img :src="url" class="h-20 w-20 object-cover rounded">
+                                            <button
+                                                @click.prevent="removeImage(index)"
+                                                class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full h-5 w-5 flex items-center justify-center"
+                                            >
+                                                &times;
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div class="flex justify-end">
                                     <button
                                         type="submit"
@@ -237,6 +296,19 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Modal para vista previa de imágenes -->
+        <div v-if="showImagePreview" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50" @click="showImagePreview = false">
+            <div class="max-w-3xl max-h-3xl p-2 bg-white rounded" @click.stop>
+                <img :src="previewImageUrl" class="max-h-[80vh] max-w-full object-contain">
+                <button
+                    @click="showImagePreview = false"
+                    class="absolute top-4 right-4 bg-red-500 text-white rounded-full h-8 w-8 flex items-center justify-center"
+                >
+                    &times;
+                </button>
             </div>
         </div>
     </AuthenticatedLayout>
@@ -258,21 +330,87 @@ const props = defineProps({
 
 // Referencia al contenedor de mensajes para scroll
 const messagesContainer = ref(null);
+const fileInput = ref(null);
+const selectedFiles = ref([]);
+const imagePreviewUrls = ref([]);
+const showImagePreview = ref(false);
+const previewImageUrl = ref(null);
 
 // Formulario para enviar mensajes
 const messageForm = useForm({
     receiver_id: props.contact.id,
     content: '',
     item_id: null,
-    item_interest_id: null
+    item_interest_id: null,
+    images: []
 });
+
+// Manejar la selección de archivos
+const handleFileSelect = (event) => {
+    const files = event.target.files;
+    if (!files.length) return;
+
+    selectedFiles.value = Array.from(files);
+
+    // Generar URLs para la vista previa
+    imagePreviewUrls.value = [];
+    for (let i = 0; i < files.length; i++) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            imagePreviewUrls.value.push(e.target.result);
+        };
+        reader.readAsDataURL(files[i]);
+    }
+};
+
+// Eliminar una imagen de la vista previa
+const removeImage = (index) => {
+    selectedFiles.value.splice(index, 1);
+    imagePreviewUrls.value.splice(index, 1);
+    // Resetear el input de archivo para reflejar los cambios
+    if (selectedFiles.value.length === 0) {
+        fileInput.value.value = '';
+    }
+};
+
+// Abrir vista previa de imagen
+const openImagePreview = (imagePath) => {
+    previewImageUrl.value = '/storage/' + imagePath;
+    showImagePreview.value = true;
+};
 
 // Enviar mensaje
 const sendMessage = () => {
+    // Crear un objeto FormData para enviar el formulario con archivos
+    const formData = new FormData();
+    formData.append('receiver_id', props.contact.id);
+    formData.append('content', messageForm.content);
+
+    if (messageForm.item_id) {
+        formData.append('item_id', messageForm.item_id);
+    }
+
+    if (messageForm.item_interest_id) {
+        formData.append('item_interest_id', messageForm.item_interest_id);
+    }
+
+    // Añadir las imágenes seleccionadas
+    for (let i = 0; i < selectedFiles.value.length; i++) {
+        formData.append(`images[${i}]`, selectedFiles.value[i]);
+    }
+
+    // Enviar el formulario
     messageForm.post(route('messages.store'), {
+        forceFormData: true,
+        data: formData,
         preserveScroll: true,
         onSuccess: () => {
             messageForm.reset('content', 'item_id', 'item_interest_id');
+            selectedFiles.value = [];
+            imagePreviewUrls.value = [];
+            if (fileInput.value) {
+                fileInput.value.value = '';
+            }
             scrollToBottom();
         }
     });

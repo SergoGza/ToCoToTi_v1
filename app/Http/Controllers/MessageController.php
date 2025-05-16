@@ -177,6 +177,8 @@ class MessageController extends Controller
             'content' => 'required|string',
             'item_id' => 'nullable|exists:items,id',
             'item_interest_id' => 'nullable|exists:item_interests,id',
+            'images' => 'nullable|array',
+            'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
         $user = Auth::user();
@@ -212,6 +214,15 @@ class MessageController extends Controller
             }
         }
 
+        // Procesar imágenes si existen
+        $imagesPaths = [];
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $image) {
+                $path = $image->store('messages', 'public');
+                $imagesPaths[] = $path;
+            }
+        }
+
         // Crear el mensaje
         $message = Message::create([
             'sender_id' => $user->id,
@@ -219,6 +230,7 @@ class MessageController extends Controller
             'content' => $request->content,
             'item_id' => $request->item_id,
             'item_interest_id' => $request->item_interest_id,
+            'images' => !empty($imagesPaths) ? $imagesPaths : null,
             'read' => false
         ]);
 
@@ -281,5 +293,15 @@ class MessageController extends Controller
             ->update(['read' => true, 'read_at' => now()]);
 
         return redirect()->back();
+    }
+
+    /**
+     * Obtener la cantidad de mensajes no leídos.
+     */
+    public function getUnreadCount()
+    {
+        $count = Auth::user()->unreadMessagesCount();
+
+        return response()->json(['count' => $count]);
     }
 }

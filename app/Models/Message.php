@@ -15,6 +15,7 @@ class Message extends Model
         'item_id',
         'item_interest_id',
         'content',
+        'images',
         'read',
         'read_at'
     ];
@@ -22,6 +23,7 @@ class Message extends Model
     protected $casts = [
         'read' => 'boolean',
         'read_at' => 'datetime',
+        'images' => 'array',
     ];
 
     /**

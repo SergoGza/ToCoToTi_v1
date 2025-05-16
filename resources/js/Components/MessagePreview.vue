@@ -43,7 +43,7 @@
 </template>
 
 <script setup>
-import { useRouter } from '@inertiajs/vue3';
+import { router } from '@inertiajs/vue3';
 
 const props = defineProps({
     contact: {
@@ -63,8 +63,6 @@ const props = defineProps({
         default: null
     }
 });
-
-const router = useRouter();
 
 const goToConversation = () => {
     router.visit(route('messages.show', props.contact.id));

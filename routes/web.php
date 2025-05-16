@@ -80,6 +80,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/messages/{contact}/read', [MessageController::class, 'markAsRead'])->name('messages.read');
     Route::get('/items/{item}/message', [MessageController::class, 'createFromItem'])->name('messages.fromItem');
     Route::get('/interests/{interest}/message', [MessageController::class, 'createFromInterest'])->name('messages.fromInterest');
+
+    // Nueva ruta para el conteo de mensajes no leídos
+    Route::get('/api/unread-messages-count', [MessageController::class, 'getUnreadCount'])->name('api.unreadMessagesCount');
 });
 
 require __DIR__.'/auth.php';
