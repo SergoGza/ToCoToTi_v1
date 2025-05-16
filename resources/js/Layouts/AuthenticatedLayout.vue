@@ -1,4 +1,3 @@
-<!-- resources/js/Layouts/AuthenticatedLayout.vue -->
 <template>
     <div>
         <div class="min-h-screen bg-gray-100">
@@ -255,6 +254,10 @@
                 <slot />
             </main>
         </div>
+
+        <!-- Componentes de UI -->
+        <LoadingIndicator ref="loadingIndicator" />
+        <ToastNotification ref="toastNotification" />
     </div>
 </template>
 
@@ -266,26 +269,106 @@ import DropdownLink from '@/Components/DropdownLink.vue';
 import NavLink from '@/Components/NavLink.vue';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink.vue';
 import NotificationDropdown from '@/Components/NotificationDropdown.vue';
-import { Link } from '@inertiajs/vue3';
+import LoadingIndicator from '@/Components/LoadingIndicator.vue';
+import ToastNotification from '@/Components/ToastNotification.vue';
+import { Link, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 
 const showingNavigationDropdown = ref(false);
 const unreadMessagesCount = ref(0);
+const loadingIndicator = ref(null);
+const toastNotification = ref(null);
 
-// Obtener el conteo de mensajes no leídos cuando se monta el componente
-onMounted(async () => {
+onMounted(() => {
+    // Configurar interceptors de Axios
+    axios.interceptors.request.use(
+        (config) => {
+            // Si la petición no tiene un header personalizado para evitar el loader
+            if (!config.headers['X-No-Loading']) {
+                if (loadingIndicator.value) {
+                    loadingIndicator.value.showLoading();
+                } else {
+                    window.dispatchEvent(new CustomEvent('show-loading'));
+                }
+            }
+            return config;
+        },
+        (error) => {
+            if (loadingIndicator.value) {
+                loadingIndicator.value.hideLoading();
+            } else {
+                window.dispatchEvent(new CustomEvent('hide-loading'));
+            }
+            return Promise.reject(error);
+        }
+    );
+
+    axios.interceptors.response.use(
+        (response) => {
+            if (loadingIndicator.value) {
+                loadingIndicator.value.hideLoading();
+            } else {
+                window.dispatchEvent(new CustomEvent('hide-loading'));
+            }
+            return response;
+        },
+        (error) => {
+            if (loadingIndicator.value) {
+                loadingIndicator.value.hideLoading();
+            } else {
+                window.dispatchEvent(new CustomEvent('hide-loading'));
+            }
+            return Promise.reject(error);
+        }
+    );
+
+    // Obtener el conteo de mensajes no leídos cuando se monta el componente
     try {
         // Creamos un nuevo endpoint para obtener este conteo
-        const response = await axios.get('/api/unread-messages-count');
-        unreadMessagesCount.value = response.data.count;
+        axios.get('/api/unread-messages-count', {
+            headers: { 'X-No-Loading': 'true' } // Evitar mostrar el loader para esta petición específica
+        }).then(response => {
+            unreadMessagesCount.value = response.data.count;
 
-        // Actualizar el conteo cada 30 segundos
-        setInterval(async () => {
-            const refreshResponse = await axios.get('/api/unread-messages-count');
-            unreadMessagesCount.value = refreshResponse.data.count;
-        }, 30000);
+            // Actualizar el conteo cada 30 segundos
+            setInterval(async () => {
+                const refreshResponse = await axios.get('/api/unread-messages-count', {
+                    headers: { 'X-No-Loading': 'true' }
+                });
+                unreadMessagesCount.value = refreshResponse.data.count;
+            }, 30000);
+        });
     } catch (error) {
         console.error('Error al obtener el conteo de mensajes no leídos:', error);
     }
+
+    // Añadir escucha para flash messages de Inertia
+    const page = usePage();
+    if (page.props.flash) {
+        if (page.props.flash.success && toastNotification.value) {
+            toastNotification.value.success(page.props.flash.success);
+        }
+        if (page.props.flash.error && toastNotification.value) {
+            toastNotification.value.error(page.props.flash.error);
+        }
+    }
 });
+
+// Función auxiliar para mostrar toast
+// Podemos exponerla globalmente para usarla desde cualquier componente
+const showToast = (message, type = 'info', duration = 5000) => {
+    if (toastNotification.value) {
+        toastNotification.value.addToast(message, type, duration);
+    } else {
+        // Fallback si el componente no está disponible
+        window.dispatchEvent(
+            new CustomEvent('add-toast', {
+                detail: { message, type, duration }
+            })
+        );
+    }
+};
+
+// Exponer la función globalmente
+window.showToast = showToast;
 </script>

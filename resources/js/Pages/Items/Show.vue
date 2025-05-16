@@ -172,44 +172,35 @@
                     </div>
                 </div>
 
-                <!-- Diálogo de confirmación para eliminar -->
-                <div v-if="confirmDelete" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div class="bg-white p-6 rounded-lg max-w-md w-full">
-                        <h3 class="text-lg font-bold mb-4">¿Estás seguro de que quieres eliminar este item?</h3>
-                        <p class="mb-4">Esta acción no se puede deshacer.</p>
-                        <div class="flex justify-end space-x-4">
-                            <button
-                                @click="confirmDelete = false"
-                                class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                @click="deleteItem"
-                                class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-                            >
-                                Eliminar
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                <!-- Modal de confirmación para eliminar -->
+                <ConfirmationModal
+                    :show="confirmDelete"
+                    title="¿Estás seguro de que quieres eliminar este item?"
+                    message="Esta acción no se puede deshacer."
+                    confirm-text="Eliminar"
+                    @confirm="deleteItem"
+                    @cancel="confirmDelete = false"
+                    type="danger"
+                />
             </div>
         </div>
     </AuthenticatedLayout>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import {ref, computed} from 'vue';
+import {Head, Link, useForm, router} from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import ItemStatusBadge from '@/Components/ItemStatusBadge.vue';
 import ItemStatusChanger from '@/Components/ItemStatusChanger.vue';
+import ConfirmationModal from '@/Components/ConfirmationModal.vue';
 
 const props = defineProps({
     item: Object,
-    hasInterest: Boolean
+    hasInterest: Boolean,
+    isOwner: Boolean
 });
 
 const confirmDelete = ref(false);
@@ -245,21 +236,37 @@ const showInterest = () => {
         preserveScroll: true,
         onSuccess: () => {
             form.reset('message');
+            window.showToast('Has mostrado interés en este item', 'success');
+        },
+        onError: () => {
+            window.showToast('Error al mostrar interés', 'error');
         }
     });
 };
 
 // Actualizar el estado de un interés
 const updateInterest = (interestId, status) => {
-    useForm({ status }).patch(route('interests.update', interestId), {
-        preserveScroll: true
+    useForm({status}).patch(route('interests.update', interestId), {
+        preserveScroll: true,
+        onSuccess: () => {
+            window.showToast(`Interés marcado como ${status === 'accepted' ? 'aceptado' : 'rechazado'}`, 'success');
+        },
+        onError: () => {
+            window.showToast('Error al actualizar el interés', 'error');
+        }
     });
 };
 
 // Eliminar item
 const deleteItem = () => {
     useForm({}).delete(route('items.destroy', props.item.id), {
-        onSuccess: () => window.location = route('items.index')
+        onSuccess: () => {
+            window.showToast('Item eliminado correctamente', 'success');
+            router.visit(route('items.index'));
+        },
+        onError: () => {
+            window.showToast('Error al eliminar el item', 'error');
+        }
     });
 };
 
