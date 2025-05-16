@@ -122,3 +122,11 @@ onUnmounted(() => {
 
 .toast-enter-from {
     opacity: 0;
+    transform: translateY(30px);
+}
+
+.toast-leave-to {
+    opacity: 0;
+    transform: translateY(-30px);
+}
+</style>
