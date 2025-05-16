@@ -9,10 +9,10 @@
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                 <!-- Mensajes de alerta -->
-                <div v-if="$page.props.flash.success" class="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+                <div v-if="$page.props.flash && $page.props.flash.success" class="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
                     {{ $page.props.flash.success }}
                 </div>
-                <div v-if="$page.props.flash.error" class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                <div v-if="$page.props.flash && $page.props.flash.error" class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
                     {{ $page.props.flash.error }}
                 </div>
 
@@ -231,15 +231,21 @@ const formatCondition = (condition) => {
 };
 
 // Mostrar interés en el item
+// Mostrar interés en el item
 const showInterest = () => {
     form.post(route('interests.store'), {
         preserveScroll: true,
         onSuccess: () => {
             form.reset('message');
-            window.showToast('Has mostrado interés en este item', 'success');
+            window.showSuccessToast('Has mostrado interés en este item. El propietario será notificado.');
         },
-        onError: () => {
-            window.showToast('Error al mostrar interés', 'error');
+        onError: (errors) => {
+            // Si hay un mensaje de error específico, lo mostramos
+            if (errors.message) {
+                window.showErrorToast(errors.message);
+            } else {
+                window.showErrorToast('Error al mostrar interés. Por favor, inténtalo de nuevo.');
+            }
         }
     });
 };
@@ -258,14 +264,16 @@ const updateInterest = (interestId, status) => {
 };
 
 // Eliminar item
+
 const deleteItem = () => {
     useForm({}).delete(route('items.destroy', props.item.id), {
         onSuccess: () => {
-            window.showToast('Item eliminado correctamente', 'success');
+            window.showSuccessToast('Item eliminado correctamente');
             router.visit(route('items.index'));
         },
         onError: () => {
-            window.showToast('Error al eliminar el item', 'error');
+            window.showErrorToast('Error al eliminar el item. Por favor, inténtalo de nuevo.');
+            confirmDelete.value = false;
         }
     });
 };
