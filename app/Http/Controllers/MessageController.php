@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\NewMessage;
 use App\Models\Message;
 use App\Models\User;
 use App\Models\Item;
@@ -238,6 +239,9 @@ class MessageController extends Controller
         if (class_exists('App\Services\NotificationService')) {
             NotificationService::createMessageReceivedNotification($message);
         }
+
+        // Emitir evento para broadcasting
+        broadcast(new NewMessage($message))->toOthers();
 
         return redirect()->back()->with('success', 'Mensaje enviado');
     }

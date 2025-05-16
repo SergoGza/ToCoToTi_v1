@@ -5,12 +5,23 @@ namespace App\Http\Controllers;
 use App\Models\Request as ItemRequest;
 use App\Models\Category;
 use App\Models\Item;
+use App\Services\MatchingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class RequestController extends Controller
 {
+    protected $matchingService;
+
+    /**
+     * Constructor con inyección del servicio de coincidencias.
+     */
+    public function __construct(MatchingService $matchingService = null)
+    {
+        $this->matchingService = $matchingService ?: new MatchingService();
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -103,6 +114,15 @@ class RequestController extends Controller
 
         $itemRequest->save();
 
+        // Buscar ítems que coincidan con esta nueva solicitud
+        $matchingItems = $this->matchingService->findMatchingItems($itemRequest);
+
+        // Redirigir y mostrar un mensaje sobre ítems coincidentes si los hay
+        if ($matchingItems->count() > 0) {
+            return redirect()->route('requests.show', $itemRequest->id)
+                ->with('success', "Solicitud creada. ¡Encontramos {$matchingItems->count()} ítems que podrían interesarte!");
+        }
+
         return redirect()->route('requests.index')->with('success', 'Solicitud creada correctamente');
     }
 
@@ -115,16 +135,11 @@ class RequestController extends Controller
         $request->load(['user', 'category']);
 
         // Verificamos si hay items que coincidan con la categoría de la solicitud
-        $matchingItems = Item::where('category_id', $request->category_id)
-            ->where('status', 'available')
-            ->where('user_id', '!=', Auth::id()) // No mostrar los propios items del usuario
-            ->with('user')
-            ->take(5)
-            ->get();
+        $matchingItems = $this->matchingService->findMatchingItems($request);
 
         return Inertia::render('Requests/Show', [
             'request' => $request,
-            'matchingItems' => $matchingItems,
+            'matchingItems' => $matchingItems->take(5), // Limitamos a 5 resultados
             'isOwner' => Auth::id() === $request->user_id
         ]);
     }
@@ -178,6 +193,20 @@ class RequestController extends Controller
         }
 
         $request->save();
+
+        // Si la solicitud sigue activa y se modificaron campos clave, buscar nuevas coincidencias
+        if ($request->status === 'active' &&
+            ($request->wasChanged('title') ||
+                $request->wasChanged('description') ||
+                $request->wasChanged('category_id'))) {
+
+            $matchingItems = $this->matchingService->findMatchingItems($request);
+
+            if ($matchingItems->count() > 0) {
+                return redirect()->route('requests.show', $request->id)
+                    ->with('success', "Solicitud actualizada. ¡Encontramos {$matchingItems->count()} ítems que podrían interesarte!");
+            }
+        }
 
         return redirect()->route('requests.show', $request->id)->with('success', 'Solicitud actualizada correctamente');
     }

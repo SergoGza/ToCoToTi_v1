@@ -146,7 +146,7 @@ class ItemController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Item $item)
+    public function show(Item $item, MatchingService $matchingService)
     {
         // Cargamos las relaciones necesarias
         $item->load(['user', 'category', 'interests.user']);
@@ -157,10 +157,14 @@ class ItemController extends Controller
             $hasInterest = $item->interests->contains('user_id', Auth::id());
         }
 
+        // Buscar solicitudes que coincidan con este ítem
+        $matchingRequests = $matchingService->findMatchingRequests($item);
+
         return Inertia::render('Items/Show', [
             'item' => $item,
             'hasInterest' => $hasInterest,
-            'isOwner' => Auth::id() === $item->user_id
+            'isOwner' => Auth::id() === $item->user_id,
+            'matchingRequests' => $matchingRequests->take(3) // Limitamos a 3 resultados
         ]);
     }
 

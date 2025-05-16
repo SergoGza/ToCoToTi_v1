@@ -14,7 +14,7 @@ return [
     |
     | This option defines the default log channel that is utilized to write
     | messages to your logs. The value provided here should match one of
-    | the channels present in the list of "channels" configured below.
+    | the channels.php present in the list of "channels.php" configured below.
     |
     */
 
@@ -41,7 +41,7 @@ return [
     | Log Channels
     |--------------------------------------------------------------------------
     |
-    | Here you may configure the log channels for your application. Laravel
+    | Here you may configure the log channels.php for your application. Laravel
     | utilizes the Monolog PHP logging library, which includes a variety
     | of powerful log handlers and formatters that you're free to use.
     |
@@ -50,11 +50,11 @@ return [
     |
     */
 
-    'channels' => [
+    'channels.php' => [
 
         'stack' => [
             'driver' => 'stack',
-            'channels' => explode(',', env('LOG_STACK', 'single')),
+            'channels.php' => explode(',', env('LOG_STACK', 'single')),
             'ignore_exceptions' => false,
         ],
 

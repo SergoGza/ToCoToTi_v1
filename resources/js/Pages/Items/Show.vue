@@ -169,6 +169,26 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Solicitudes que coinciden con este ítem -->
+                        <div v-if="matchingRequests && matchingRequests.length && $page.props.auth.user" class="mt-8 border-t pt-6">
+                            <h3 class="text-lg font-semibold mb-4">Solicitudes que podrían interesarte:</h3>
+                            <div class="space-y-4">
+                                <div v-for="request in matchingRequests" :key="request.id" class="border rounded-lg p-4">
+                                    <h4 class="font-bold">{{ request.title }}</h4>
+                                    <p class="text-sm text-gray-600 mb-2">
+                                        Solicitado por: {{ request.user.name }}
+                                    </p>
+                                    <p class="text-sm line-clamp-2 mb-3">{{ request.description }}</p>
+                                    <Link
+                                        :href="route('requests.show', request.id)"
+                                        class="inline-block px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
+                                    >
+                                        Ver detalles
+                                    </Link>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -200,7 +220,11 @@ import ConfirmationModal from '@/Components/ConfirmationModal.vue';
 const props = defineProps({
     item: Object,
     hasInterest: Boolean,
-    isOwner: Boolean
+    isOwner: Boolean,
+    matchingRequests: {
+        type: Array,
+        default: () => []
+    }
 });
 
 const confirmDelete = ref(false);
@@ -230,7 +254,6 @@ const formatCondition = (condition) => {
     return conditions[condition] || condition;
 };
 
-// Mostrar interés en el item
 // Mostrar interés en el item
 const showInterest = () => {
     form.post(route('interests.store'), {
@@ -264,7 +287,6 @@ const updateInterest = (interestId, status) => {
 };
 
 // Eliminar item
-
 const deleteItem = () => {
     useForm({}).delete(route('items.destroy', props.item.id), {
         onSuccess: () => {

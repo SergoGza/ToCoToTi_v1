@@ -335,7 +335,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, nextTick } from 'vue';
+import { ref, watch, onMounted, nextTick, onBeforeUnmount } from 'vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 
@@ -358,6 +358,7 @@ const imagePreviewUrls = ref([]);
 const showImagePreview = ref(false);
 const previewImageUrl = ref(null);
 const showSidebar = ref(false); // Control de visibilidad del panel lateral en móvil
+const currentMessages = ref([...props.messages]); // Crear una copia reactiva de los mensajes
 
 // Formulario para enviar mensajes
 const messageForm = useForm({
@@ -458,7 +459,7 @@ const shouldShowDate = (message, index) => {
     if (index === 0) return true;
 
     const currentDate = new Date(message.created_at).toLocaleDateString();
-    const prevDate = new Date(props.messages[index - 1].created_at).toLocaleDateString();
+    const prevDate = new Date(currentMessages.value[index - 1].created_at).toLocaleDateString();
 
     return currentDate !== prevDate;
 };
@@ -506,6 +507,35 @@ const formatInterestStatus = (status) => {
     return statusMap[status] || status;
 };
 
+// Configurar Echo para escuchar mensajes en tiempo real
+const setupEchoListeners = () => {
+    window.Echo.private(`chat.${props.contact.id}`)
+        .listen('.new.message', (e) => {
+            // Si el mensaje es de la conversación actual (entre yo y el contacto)
+            if ((e.sender_id === props.contact.id && e.receiver_id === window.$page.props.auth.user.id) ||
+                (e.sender_id === window.$page.props.auth.user.id && e.receiver_id === props.contact.id)) {
+
+                // Añadir el mensaje a la lista de mensajes
+                currentMessages.value.push(e);
+
+                // Marcar como leído si somos el destinatario
+                if (e.receiver_id === window.$page.props.auth.user.id) {
+                    // Enviar solicitud para marcar como leído
+                    fetch(route('messages.read', props.contact.id), {
+                        method: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        }
+                    });
+                }
+
+                // Hacer scroll hasta el final
+                scrollToBottom();
+            }
+        });
+};
+
 // Asegurar que el panel está visible en escritorio
 onMounted(() => {
     const checkScreenSize = () => {
@@ -525,14 +555,29 @@ onMounted(() => {
     // Hacer scroll al fondo
     scrollToBottom();
 
-    // Limpiar event listener
+    // Configurar Echo para mensajes en tiempo real
+    setupEchoListeners();
+
+    // Limpiar event listeners
     return () => {
         window.removeEventListener('resize', checkScreenSize);
     };
 });
 
+// Limpiar listeners de Echo al desmontar el componente
+onBeforeUnmount(() => {
+    if (window.Echo) {
+        window.Echo.leave(`chat.${props.contact.id}`);
+    }
+});
+
 // Hacer scroll al fondo cuando se cargan los mensajes o cuando hay nuevos
-watch(() => props.messages.length, () => {
+watch(() => currentMessages.value.length, () => {
     scrollToBottom();
 });
+
+// Asegurarse de que 'messages' se actualice si cambia props.messages
+watch(() => props.messages, (newMessages) => {
+    currentMessages.value = [...newMessages];
+}, { deep: true });
 </script>
