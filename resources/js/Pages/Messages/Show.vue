@@ -131,13 +131,13 @@
                     <div class="bg-white shadow-sm sm:rounded-lg overflow-hidden dark:bg-gray-800">
                         <!-- Mensajes con altura adaptada -->
                         <div class="h-[400px] md:h-[500px] overflow-y-auto p-4 md:p-6 dark:text-white" ref="messagesContainer">
-                            <div v-if="messages.length === 0" class="text-center py-10">
+                            <div v-if="currentMessages.length === 0" class="text-center py-10">
                                 <p class="text-gray-500 dark:text-gray-400">No hay mensajes en esta conversación.</p>
                                 <p class="text-sm text-gray-400 dark:text-gray-500 mt-2">Envía un mensaje para comenzar a chatear.</p>
                             </div>
                             <div v-else class="space-y-4">
                                 <div
-                                    v-for="(message, index) in messages"
+                                    v-for="(message, index) in currentMessages"
                                     :key="message.id"
                                     class="flex"
                                     :class="{ 'justify-end': message.sender_id === $page.props.auth.user.id }"
@@ -336,7 +336,7 @@
 
 <script setup>
 import { ref, watch, onMounted, nextTick, onBeforeUnmount } from 'vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 
 // Props
@@ -428,19 +428,28 @@ const sendMessage = () => {
         formData.append(`images[${i}]`, selectedFiles.value[i]);
     }
 
+    console.log("Enviando mensaje a: ", props.contact.id);
+
     // Enviar el formulario
     messageForm.post(route('messages.store'), {
         forceFormData: true,
         data: formData,
         preserveScroll: true,
         onSuccess: () => {
+            console.log("✅ Mensaje enviado correctamente");
+            // Resetear el formulario
             messageForm.reset('content', 'item_id', 'item_interest_id');
             selectedFiles.value = [];
             imagePreviewUrls.value = [];
             if (fileInput.value) {
                 fileInput.value.value = '';
             }
+
+            // Hacer scroll al fondo
             scrollToBottom();
+        },
+        onError: (errors) => {
+            console.error("❌ Error al enviar mensaje:", errors);
         }
     });
 };
@@ -507,37 +516,96 @@ const formatInterestStatus = (status) => {
     return statusMap[status] || status;
 };
 
-// Configurar Echo para escuchar mensajes en tiempo real
-const setupEchoListeners = () => {
-    window.Echo.private(`chat.${props.contact.id}`)
-        .listen('.new.message', (e) => {
-            // Si el mensaje es de la conversación actual (entre yo y el contacto)
-            if ((e.sender_id === props.contact.id && e.receiver_id === window.$page.props.auth.user.id) ||
-                (e.sender_id === window.$page.props.auth.user.id && e.receiver_id === props.contact.id)) {
+// Manejar la recepción de un nuevo mensaje a través de Echo
+const handleNewMessage = (e) => {
+    console.log("🔔 Evento de mensaje recibido:", e);
 
-                // Añadir el mensaje a la lista de mensajes
-                currentMessages.value.push(e);
+    // Verificar si el mensaje es para esta conversación
+    const isSameConversation = (
+        (e.sender_id === props.contact.id && e.receiver_id === usePage().props.auth.user.id) ||
+        (e.sender_id === usePage().props.auth.user.id && e.receiver_id === props.contact.id)
+    );
 
-                // Marcar como leído si somos el destinatario
-                if (e.receiver_id === window.$page.props.auth.user.id) {
-                    // Enviar solicitud para marcar como leído
-                    fetch(route('messages.read', props.contact.id), {
-                        method: 'POST',
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                        }
-                    });
-                }
+    if (isSameConversation) {
+        console.log("👥 Mensaje relacionado con esta conversación");
 
-                // Hacer scroll hasta el final
-                scrollToBottom();
+        // Verificar si el mensaje ya existe para evitar duplicados
+        const messageExists = currentMessages.value.some(m => m.id === e.id);
+
+        if (!messageExists) {
+            console.log("➕ Añadiendo nuevo mensaje a la conversación");
+            // Añadir mensaje a la lista
+            currentMessages.value.push(e);
+
+            // Marcar como leído si somos el destinatario
+            if (e.receiver_id === usePage().props.auth.user.id) {
+                fetch(route('messages.read', props.contact.id), {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    }
+                }).then(() => {
+                    console.log("✓ Mensaje marcado como leído");
+                }).catch(error => {
+                    console.error("❌ Error al marcar como leído:", error);
+                });
             }
-        });
+
+            // Hacer scroll al fondo
+            scrollToBottom();
+
+            // Emitir evento global para actualizar la lista de conversaciones
+            if (window.emitter) {
+                console.log("📢 Emitiendo evento 'new-message' para actualizar lista de conversaciones");
+                window.emitter.emit('new-message', e);
+            }
+        } else {
+            console.log("⚠️ Mensaje duplicado, no se añade a la conversación");
+        }
+    } else {
+        console.log("🔀 Mensaje pertenece a otra conversación");
+    }
 };
 
-// Asegurar que el panel está visible en escritorio
+// Configurar Echo para escuchar mensajes en tiempo real
+const setupEchoListeners = () => {
+    console.log(`Escuchando en canal: chat.${usePage().props.auth.user.id}`);
+
+    try {
+        // Primero, verificamos que Echo esté disponible
+        if (!window.Echo) {
+            console.error("Echo no está inicializado");
+            return;
+        }
+
+        // Suscribirse al canal personal con manejo de errores
+        window.Echo.private(`chat.${usePage().props.auth.user.id}`)
+            .listen('.new.message', (e) => {
+                console.log('¡MENSAJE RECIBIDO!', e);
+                alert('¡Nuevo mensaje recibido!');
+
+                // Si lo deseas, puedes seguir con tu lógica actual aquí
+                // handleNewMessage(e);
+            })
+            .subscribed(() => {
+                console.log("✅ Suscrito al canal correctamente");
+            })
+            .error(error => {
+                console.error("❌ Error al suscribirse al canal:", error);
+                alert("Error de suscripción: " + JSON.stringify(error));
+            });
+
+        console.log("Escucha configurada exitosamente");
+    } catch (error) {
+        console.error("Error al configurar la escucha:", error);
+    }
+};
+
+// Al montar el componente
 onMounted(() => {
+    console.log("🔄 Componente de mensajes montado");
+
+    // Verificar tamaño de la pantalla para decidir si mostrar el panel lateral
     const checkScreenSize = () => {
         if (window.innerWidth >= 768) { // md breakpoint en Tailwind
             showSidebar.value = true;
@@ -558,25 +626,28 @@ onMounted(() => {
     // Configurar Echo para mensajes en tiempo real
     setupEchoListeners();
 
-    // Limpiar event listeners
-    return () => {
-        window.removeEventListener('resize', checkScreenSize);
-    };
+    // Registrar que estamos listos para recibir mensajes
+    console.log("📨 Listo para recibir mensajes en tiempo real");
 });
 
-// Limpiar listeners de Echo al desmontar el componente
+// Limpiar listeners al desmontar el componente
 onBeforeUnmount(() => {
+    console.log("🧹 Limpiando listeners y desconectando de canales");
+
     if (window.Echo) {
-        window.Echo.leave(`chat.${props.contact.id}`);
+        window.Echo.leave(`chat.${usePage().props.auth.user.id}`);
     }
+
+    // Eliminar listener de resize
+    window.removeEventListener('resize', () => {});
 });
 
-// Hacer scroll al fondo cuando se cargan los mensajes o cuando hay nuevos
+// Hacer scroll al fondo cuando cambia el número de mensajes
 watch(() => currentMessages.value.length, () => {
     scrollToBottom();
 });
 
-// Asegurarse de que 'messages' se actualice si cambia props.messages
+// Actualizar mensajes si cambia la prop
 watch(() => props.messages, (newMessages) => {
     currentMessages.value = [...newMessages];
 }, { deep: true });

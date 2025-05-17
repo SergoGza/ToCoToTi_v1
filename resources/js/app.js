@@ -1,11 +1,14 @@
 import '../css/app.css';
 import './bootstrap';
-import { usePage } from '@inertiajs/vue3';
 
-import { createInertiaApp } from '@inertiajs/vue3';
+import { createInertiaApp, usePage } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createApp, h } from 'vue';
 import { ZiggyVue } from '../../vendor/tightenco/ziggy';
+import mitt from 'mitt'; // Importar mitt para eventos globales
+
+// Crear un emisor global para comunicación entre componentes
+window.emitter = mitt();
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
@@ -68,56 +71,11 @@ const setupToastNotifications = () => {
     window.showErrorToast = (message, duration = 5000) => window.showToast(message, 'error', duration);
     window.showInfoToast = (message, duration = 5000) => window.showToast(message, 'info', duration);
     window.showWarningToast = (message, duration = 5000) => window.showToast(message, 'warning', duration);
-
-    // También mostrar toast para mensajes flash existentes
-    document.addEventListener('DOMContentLoaded', () => {
-        try {
-            const page = usePage();
-            if (page.props.flash) {
-                if (page.props.flash.success) {
-                    window.showSuccessToast(page.props.flash.success);
-                }
-                if (page.props.flash.error) {
-                    window.showErrorToast(page.props.flash.error);
-                }
-            }
-        } catch (error) {
-            console.error('Error al procesar mensajes flash:', error);
-        }
-    });
 };
 
-// Ejecutar la configuración del modo oscuro y notificaciones
+// Ejecutar la configuración del modo oscuro
 setupDarkMode();
 setupToastNotifications();
-
-// Helper global para acceder a los mensajes flash de forma segura
-window.flash = function(type) {
-    try {
-        const page = usePage();
-        if (page.props && page.props.flash && page.props.flash[type]) {
-            return page.props.flash[type];
-        }
-    } catch (error) {
-        console.error('Error al acceder a mensaje flash:', error);
-    }
-    return null;
-};
-
-createInertiaApp({
-    title: (title) => `${title} - Laravel`,
-    resolve: (name) => resolvePageComponent(`./Pages/${name}.vue`, import.meta.glob('./Pages/**/*.vue')),
-    setup({ el, App, props, plugin }) {
-        createApp({ render: () => h(App, props) })
-            .use(plugin)
-            .use(ZiggyVue, Ziggy)
-            .use(flashPlugin) // Registrar nuestro plugin flash
-            .mount(el);
-    },
-    progress: {
-        color: '#4B5563',
-    },
-});
 
 // Definir la función flash global como un plugin de Vue
 const flashPlugin = {
@@ -135,3 +93,37 @@ const flashPlugin = {
         };
     }
 };
+
+createInertiaApp({
+    title: (title) => `${title} - ${appName}`,
+    resolve: (name) => resolvePageComponent(`./Pages/${name}.vue`, import.meta.glob('./Pages/**/*.vue')),
+    setup({ el, App, props, plugin }) {
+        const app = createApp({ render: () => h(App, props) })
+            .use(plugin)
+            .use(ZiggyVue)
+            .use(flashPlugin);
+
+        // Montar la aplicación
+        app.mount(el);
+
+        // IMPORTANTE: Solo procesar mensajes flash después de que la aplicación esté montada
+        setTimeout(() => {
+            try {
+                const page = usePage();
+                if (page.props.flash) {
+                    if (page.props.flash.success) {
+                        window.showSuccessToast(page.props.flash.success);
+                    }
+                    if (page.props.flash.error) {
+                        window.showErrorToast(page.props.flash.error);
+                    }
+                }
+            } catch (error) {
+                console.error('Error al procesar mensajes flash:', error);
+            }
+        }, 0);
+    },
+    progress: {
+        color: '#4B5563',
+    },
+});

@@ -25,17 +25,19 @@ class NewMessage implements ShouldBroadcast
         $this->message = $message;
 
         // Cargar relaciones necesarias para la serialización
+        // Esto es crucial para que el evento contenga toda la información necesaria
         $this->message->load(['sender', 'receiver', 'item', 'interest']);
     }
 
     /**
-     * Get the channels.php the event should broadcast on.
+     * Get the channels the event should broadcast on.
      *
      * @return array<int, \Illuminate\Broadcasting\Channel>
      */
     public function broadcastOn(): array
     {
         // Enviamos el mensaje a un canal para cada participante de la conversación
+        // Esto asegura que ambos usuarios reciban la actualización
         return [
             new PrivateChannel("chat.{$this->message->receiver_id}"),
             new PrivateChannel("chat.{$this->message->sender_id}")
@@ -57,6 +59,7 @@ class NewMessage implements ShouldBroadcast
      */
     public function broadcastWith(): array
     {
+        // Formatear los datos para que sean más fáciles de usar en el frontend
         return [
             'id' => $this->message->id,
             'sender_id' => $this->message->sender_id,

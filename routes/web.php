@@ -14,6 +14,13 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
+
+Route::get('/broadcast-test', function() {
+    // Este evento se transmitirá a todos los usuarios
+    event(new \App\Events\TestEvent('Prueba de broadcasting'));
+    return "Evento de prueba enviado. Verifica la consola del navegador.";
+});
+
 // Ruta principal
 Route::get('/', function () {
     return Inertia::render('Welcome', [
