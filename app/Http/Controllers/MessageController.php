@@ -242,8 +242,7 @@ class MessageController extends Controller
 
         // IMPORTANTE: Emitir evento de broadcasting para actualización en tiempo real
         // Quitar toOthers() para asegurar que todos los clientes reciban el evento
-        broadcast(new NewMessage($message))->toOthers();
-        event(new NewMessage($message));
+        broadcast(new NewMessage($message))->dispatch();
 
         // Para debug, registra que el evento fue emitido
         \Log::info('Evento NewMessage emitido para mensaje ID: ' . $message->id);

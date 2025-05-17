@@ -15,18 +15,41 @@ class NewMessage implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public $message;
+    public $messageData;
 
     /**
      * Create a new event instance.
      */
     public function __construct(Message $message)
     {
-        $this->message = $message;
-
-        // Cargar relaciones necesarias para la serialización
-        // Esto es crucial para que el evento contenga toda la información necesaria
-        $this->message->load(['sender', 'receiver', 'item', 'interest']);
+        // En lugar de guardar el modelo completo, extraemos solo los datos necesarios
+        // para evitar problemas de serialización con relaciones cíclicas
+        $this->messageData = [
+            'id' => $message->id,
+            'sender_id' => $message->sender_id,
+            'receiver_id' => $message->receiver_id,
+            'content' => $message->content,
+            'item_id' => $message->item_id,
+            'item_interest_id' => $message->item_interest_id,
+            'images' => $message->images,
+            'read' => $message->read,
+            'created_at' => $message->created_at,
+            'sender' => $message->sender ? [
+                'id' => $message->sender->id,
+                'name' => $message->sender->name
+            ] : null,
+            'receiver' => $message->receiver ? [
+                'id' => $message->receiver->id,
+                'name' => $message->receiver->name
+            ] : null,
+            'item' => $message->item ? [
+                'id' => $message->item->id,
+                'title' => $message->item->title
+            ] : null,
+            'interest' => $message->interest ? [
+                'id' => $message->interest->id
+            ] : null
+        ];
     }
 
     /**
@@ -36,11 +59,9 @@ class NewMessage implements ShouldBroadcast
      */
     public function broadcastOn(): array
     {
-        // Enviamos el mensaje a un canal para cada participante de la conversación
-        // Esto asegura que ambos usuarios reciban la actualización
         return [
-            new PrivateChannel("chat.{$this->message->receiver_id}"),
-            new PrivateChannel("chat.{$this->message->sender_id}")
+            new PrivateChannel("chat.{$this->messageData['receiver_id']}"),
+            new PrivateChannel("chat.{$this->messageData['sender_id']}")
         ];
     }
 
@@ -54,37 +75,9 @@ class NewMessage implements ShouldBroadcast
 
     /**
      * Get the data to broadcast.
-     *
-     * @return array<string, mixed>
      */
     public function broadcastWith(): array
     {
-        // Formatear los datos para que sean más fáciles de usar en el frontend
-        return [
-            'id' => $this->message->id,
-            'sender_id' => $this->message->sender_id,
-            'receiver_id' => $this->message->receiver_id,
-            'content' => $this->message->content,
-            'item_id' => $this->message->item_id,
-            'item_interest_id' => $this->message->item_interest_id,
-            'images' => $this->message->images,
-            'read' => $this->message->read,
-            'created_at' => $this->message->created_at,
-            'sender' => [
-                'id' => $this->message->sender->id,
-                'name' => $this->message->sender->name
-            ],
-            'receiver' => [
-                'id' => $this->message->receiver->id,
-                'name' => $this->message->receiver->name
-            ],
-            'item' => $this->message->item ? [
-                'id' => $this->message->item->id,
-                'title' => $this->message->item->title
-            ] : null,
-            'interest' => $this->message->interest ? [
-                'id' => $this->message->interest->id
-            ] : null
-        ];
+        return $this->messageData;
     }
 }

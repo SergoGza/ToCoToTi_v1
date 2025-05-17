@@ -578,24 +578,53 @@ const setupEchoListeners = () => {
             return;
         }
 
-        // Suscribirse al canal personal con manejo de errores
+        // Suscribirse al canal personal
         window.Echo.private(`chat.${usePage().props.auth.user.id}`)
-            .listen('.new.message', (e) => {
-                console.log('¡MENSAJE RECIBIDO!', e);
-                alert('¡Nuevo mensaje recibido!');
+            .listen('.new.message', (data) => {
+                console.log('Mensaje recibido:', data);
 
-                // Si lo deseas, puedes seguir con tu lógica actual aquí
-                // handleNewMessage(e);
+                // Convertir el objeto de datos en un formato compatible con la vista
+                const message = {
+                    id: data.id,
+                    sender_id: data.sender_id,
+                    receiver_id: data.receiver_id,
+                    content: data.content,
+                    item_id: data.item_id,
+                    item_interest_id: data.item_interest_id,
+                    images: data.images,
+                    read: data.read,
+                    created_at: data.created_at,
+                    sender: data.sender,
+                    receiver: data.receiver,
+                    item: data.item,
+                    interest: data.interest
+                };
+
+                // Usar la misma lógica que teníamos antes
+                const isSameConversation = (
+                    (message.sender_id === props.contact.id && message.receiver_id === usePage().props.auth.user.id) ||
+                    (message.sender_id === usePage().props.auth.user.id && message.receiver_id === props.contact.id)
+                );
+
+                if (isSameConversation) {
+                    // Verificar si el mensaje ya existe
+                    const messageExists = currentMessages.value.some(m => m.id === message.id);
+
+                    if (!messageExists) {
+                        // Añadir a la lista
+                        currentMessages.value.push(message);
+
+                        // Scroll al fondo
+                        scrollToBottom();
+                    }
+                }
             })
             .subscribed(() => {
                 console.log("✅ Suscrito al canal correctamente");
             })
             .error(error => {
                 console.error("❌ Error al suscribirse al canal:", error);
-                alert("Error de suscripción: " + JSON.stringify(error));
             });
-
-        console.log("Escucha configurada exitosamente");
     } catch (error) {
         console.error("Error al configurar la escucha:", error);
     }
