@@ -22,6 +22,9 @@ class NewMessage implements ShouldBroadcast
      */
     public function __construct(Message $message)
     {
+        // Cargar relaciones clave antes de extraer datos
+        $message->load(['sender', 'receiver', 'item', 'interest']);
+
         // En lugar de guardar el modelo completo, extraemos solo los datos necesarios
         // para evitar problemas de serialización con relaciones cíclicas
         $this->messageData = [

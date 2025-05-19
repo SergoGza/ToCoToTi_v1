@@ -169,10 +169,80 @@ class MessageController extends Controller
     }
 
     /**
+     * Obtener mensajes recientes para polling.
+     * Optimizado para reducir carga en el servidor.
+     */
+    public function getRecentMessages(User $contact)
+    {
+        $user = Auth::user();
+        $lastMessageId = request('last_id', 0);
+        $timestamp = request('timestamp', 0);
+
+        // Verificar el timestamp para implementar throttling (limitar frecuencia)
+        $now = now()->timestamp;
+        $timeDiff = $now - $timestamp;
+
+        // Si han pasado menos de 5 segundos desde la última llamada
+        // y no hay nuevos mensajes, devolver un código 304 Not Modified
+        if ($timeDiff < 5) {
+            // Verificar rápidamente si hay algún mensaje nuevo sin cargar todo
+            $hasNewMessages = Message::where(function($query) use ($user, $contact) {
+                $query->where(function($q) use ($user, $contact) {
+                    $q->where('sender_id', $user->id)
+                        ->where('receiver_id', $contact->id);
+                })->orWhere(function($q) use ($user, $contact) {
+                    $q->where('sender_id', $contact->id)
+                        ->where('receiver_id', $user->id);
+                });
+            })
+                ->where('id', '>', $lastMessageId)
+                ->exists();
+
+            if (!$hasNewMessages) {
+                return response()->json([
+                    'messages' => [],
+                    'timestamp' => $now,
+                    'throttled' => true
+                ], 200);
+            }
+        }
+
+        // Obtener solo mensajes más recientes que el último ID conocido por el cliente
+        $messages = Message::where(function($query) use ($user, $contact) {
+            $query->where(function($q) use ($user, $contact) {
+                $q->where('sender_id', $user->id)
+                    ->where('receiver_id', $contact->id);
+            })->orWhere(function($q) use ($user, $contact) {
+                $q->where('sender_id', $contact->id)
+                    ->where('receiver_id', $user->id);
+            });
+        })
+            ->where('id', '>', $lastMessageId)
+            ->with(['item', 'interest.item'])
+            ->orderBy('id', 'asc')
+            ->get();
+
+        // Marcar como leídos los mensajes recibidos
+        if ($messages->count() > 0) {
+            Message::where('sender_id', $contact->id)
+                ->where('receiver_id', $user->id)
+                ->where('read', false)
+                ->update(['read' => true, 'read_at' => now()]);
+        }
+
+        return response()->json([
+            'messages' => $messages,
+            'timestamp' => $now,
+            'throttled' => false
+        ]);
+    }
+
+    /**
      * Enviar un nuevo mensaje.
      */
     public function store(Request $request)
     {
+        // Validación de datos
         $request->validate([
             'receiver_id' => 'required|exists:users,id',
             'content' => 'required|string',
@@ -189,7 +259,7 @@ class MessageController extends Controller
             return redirect()->back()->with('error', 'No puedes enviarte mensajes a ti mismo');
         }
 
-        // Si hay un ID de interés, verificar que pertenece al remitente o al destinatario
+        // Si hay un ID de interés, verificarlo
         if ($request->filled('item_interest_id')) {
             $interest = ItemInterest::find($request->item_interest_id);
 
@@ -215,77 +285,49 @@ class MessageController extends Controller
             }
         }
 
-        // Procesar imágenes si existen
-        $imagesPaths = [];
-        if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $image) {
-                $path = $image->store('messages', 'public');
-                $imagesPaths[] = $path;
+        try {
+            // Crear mensaje con asignación de propiedades explícita
+            $message = new Message();
+            $message->sender_id = $user->id;
+            $message->receiver_id = $request->receiver_id;
+            $message->content = $request->content;
+            $message->item_id = $request->item_id;
+            $message->item_interest_id = $request->item_interest_id;
+            $message->read = false;
+
+            // Procesar imágenes si existen
+            $imagesPaths = [];
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $image) {
+                    $path = $image->store('messages', 'public');
+                    $imagesPaths[] = $path;
+                }
+                $message->images = $imagesPaths;
             }
+
+            $message->save();
+
+            // Notificaciones y broadcasting
+            if (class_exists('App\Services\NotificationService')) {
+                NotificationService::createMessageReceivedNotification($message);
+            }
+
+            // Mantener intento de broadcasting (aunque usemos polling)
+            try {
+                broadcast(new NewMessage($message));
+            } catch (\Exception $e) {
+                \Log::error('Error al emitir evento NewMessage (no crítico): ' . $e->getMessage());
+            }
+
+            // Devolver también el mensaje para actualizaciones optimistas
+            return redirect()->back()->with([
+                'success' => 'Mensaje enviado correctamente',
+                'message' => $message->load(['item', 'interest.item'])
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error al crear mensaje: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Error al enviar mensaje: ' . $e->getMessage());
         }
-
-        // Crear el mensaje
-        $message = Message::create([
-            'sender_id' => $user->id,
-            'receiver_id' => $request->receiver_id,
-            'content' => $request->content,
-            'item_id' => $request->item_id,
-            'item_interest_id' => $request->item_interest_id,
-            'images' => !empty($imagesPaths) ? $imagesPaths : null,
-            'read' => false
-        ]);
-
-        // Crear una notificación para el destinatario
-        if (class_exists('App\Services\NotificationService')) {
-            NotificationService::createMessageReceivedNotification($message);
-        }
-
-        // IMPORTANTE: Emitir evento de broadcasting para actualización en tiempo real
-        // Quitar toOthers() para asegurar que todos los clientes reciban el evento
-        broadcast(new NewMessage($message))->dispatch();
-
-        // Para debug, registra que el evento fue emitido
-        \Log::info('Evento NewMessage emitido para mensaje ID: ' . $message->id);
-
-        return redirect()->back()->with('success', 'Mensaje enviado');
-    }
-
-    /**
-     * Iniciar una nueva conversación desde un ítem.
-     */
-    public function createFromItem(Item $item)
-    {
-        $user = Auth::user();
-
-        // Si el usuario es el propietario, no puede iniciar conversación consigo mismo
-        if ($item->user_id === $user->id) {
-            return redirect()->route('items.show', $item->id)->with('error', 'No puedes iniciar una conversación contigo mismo');
-        }
-
-        // Redirigir a la conversación con el propietario del ítem
-        return redirect()->route('messages.show', $item->user_id)->with('itemContext', $item->id);
-    }
-
-    /**
-     * Iniciar una conversación desde un interés.
-     */
-    public function createFromInterest(ItemInterest $interest)
-    {
-        $user = Auth::user();
-
-        // Verificar que el usuario es el propietario o el interesado
-        $isOwner = $interest->item->user_id === $user->id;
-        $isInterested = $interest->user_id === $user->id;
-
-        if (!$isOwner && !$isInterested) {
-            return redirect()->back()->with('error', 'No tienes permiso para acceder a esta conversación');
-        }
-
-        // Determinar con quién hablar
-        $contactId = $isOwner ? $interest->user_id : $interest->item->user_id;
-
-        // Redirigir a la conversación
-        return redirect()->route('messages.show', $contactId)->with('interestContext', $interest->id);
     }
 
     /**
@@ -311,5 +353,27 @@ class MessageController extends Controller
         $count = Auth::user()->unreadMessagesCount();
 
         return response()->json(['count' => $count]);
+    }
+
+    // Los otros métodos se mantienen igual
+    public function createFromItem(Item $item)
+    {
+        $user = Auth::user();
+        if ($item->user_id === $user->id) {
+            return redirect()->route('items.show', $item->id)->with('error', 'No puedes iniciar una conversación contigo mismo');
+        }
+        return redirect()->route('messages.show', $item->user_id)->with('itemContext', $item->id);
+    }
+
+    public function createFromInterest(ItemInterest $interest)
+    {
+        $user = Auth::user();
+        $isOwner = $interest->item->user_id === $user->id;
+        $isInterested = $interest->user_id === $user->id;
+        if (!$isOwner && !$isInterested) {
+            return redirect()->back()->with('error', 'No tienes permiso para acceder a esta conversación');
+        }
+        $contactId = $isOwner ? $interest->user_id : $interest->item->user_id;
+        return redirect()->route('messages.show', $contactId)->with('interestContext', $interest->id);
     }
 }

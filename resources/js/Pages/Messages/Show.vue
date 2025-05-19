@@ -1,4 +1,3 @@
-<!-- resources/js/Pages/Messages/Show.vue -->
 <template>
     <Head :title="'Conversación con ' + contact.name" />
 
@@ -129,6 +128,22 @@
                 <!-- Panel principal con mensajes - Optimizado para móvil -->
                 <div class="md:w-3/4 w-full order-1 md:order-2">
                     <div class="bg-white shadow-sm sm:rounded-lg overflow-hidden dark:bg-gray-800">
+                        <!-- Estado de conexión - Solo visible cuando hay actividad de sincronización -->
+                        <div v-if="isActivelyPolling && lastPollingTime"
+                             class="bg-blue-50 dark:bg-blue-900 py-1 px-4 text-xs text-blue-700 dark:text-blue-300 flex justify-between items-center"
+                             style="opacity: 0.7;">
+                            <span class="flex items-center">
+                                <svg v-if="isActivelyPolling" xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                <span v-if="connectionStatus === 'syncing'">Sincronizando...</span>
+                                <span v-else-if="connectionStatus === 'synced'">Sincronizado</span>
+                            </span>
+                            <button @click="manualRefresh" class="text-blue-600 dark:text-blue-400 hover:underline">
+                                Actualizar
+                            </button>
+                        </div>
+
                         <!-- Mensajes con altura adaptada -->
                         <div class="h-[400px] md:h-[500px] overflow-y-auto p-4 md:p-6 dark:text-white" ref="messagesContainer">
                             <div v-if="currentMessages.length === 0" class="text-center py-10">
@@ -210,7 +225,18 @@
 
                                         <!-- Hora del mensaje y estado de lectura -->
                                         <div class="text-right text-xs text-gray-500 mt-1 flex justify-end items-center dark:text-gray-400">
-                                            <span v-if="message.read" class="mr-1 text-blue-600 dark:text-blue-400">
+                                            <!-- Indicador de estado -->
+                                            <span v-if="String(message.id).startsWith('temp-')" class="mr-1 text-yellow-500 dark:text-yellow-400">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+                                                </svg>
+                                            </span>
+                                            <span v-else-if="message.failed" class="mr-1 text-red-500 dark:text-red-400">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                                                </svg>
+                                            </span>
+                                            <span v-else-if="message.read" class="mr-1 text-blue-600 dark:text-blue-400">
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
                                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                                                 </svg>
@@ -219,6 +245,16 @@
                                         </div>
                                     </div>
                                 </div>
+                            </div>
+
+                            <!-- Indicador de carga solo visible durante la carga de mensajes -->
+                            <div v-if="isLoading" class="flex justify-center items-center py-4">
+                                <div class="loader bg-white p-5 rounded-full flex space-x-3">
+                                    <div class="w-3 h-3 bg-blue-600 rounded-full animate-bounce"></div>
+                                    <div class="w-3 h-3 bg-blue-600 rounded-full animate-bounce" style="animation-delay: 0.15s"></div>
+                                    <div class="w-3 h-3 bg-blue-600 rounded-full animate-bounce" style="animation-delay: 0.3s"></div>
+                                </div>
+                                <span class="ml-3 text-sm text-gray-500">Cargando...</span>
                             </div>
                         </div>
 
@@ -307,7 +343,7 @@
                                     <button
                                         type="submit"
                                         class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800"
-                                        :disabled="messageForm.processing"
+                                        :disabled="!messageForm.content || messageForm.content.trim() === ''"
                                     >
                                         Enviar
                                     </button>
@@ -335,9 +371,21 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, nextTick, onBeforeUnmount } from 'vue';
+import { ref, watch, onMounted, nextTick, onBeforeUnmount, computed } from 'vue';
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import axios from 'axios';
+
+// Crea una instancia de Axios específica para polling que no active el indicador de carga
+const pollingAxios = axios.create();
+
+// Marcar todas las peticiones de esta instancia como "silenciosas"
+pollingAxios.interceptors.request.use(config => {
+    // Añadir headers para que Inertia y Laravel ignoren esta petición para el indicador de carga
+    config.headers['X-Inertia-Polling'] = 'true';
+    config.headers['X-Silent-Request'] = 'true';
+    return config;
+});
 
 // Props
 const props = defineProps({
@@ -359,6 +407,18 @@ const showImagePreview = ref(false);
 const previewImageUrl = ref(null);
 const showSidebar = ref(false); // Control de visibilidad del panel lateral en móvil
 const currentMessages = ref([...props.messages]); // Crear una copia reactiva de los mensajes
+const connectionStatus = ref('idle'); // Estado de conexión: 'idle', 'syncing', 'synced'
+const isLoading = ref(false);
+const lastPollingTime = ref(null);
+const isActivelyPolling = ref(false);
+
+// Estado para el polling optimizado
+const lastMessageId = ref(0);
+const pollingInterval = ref(null);
+const pollingDelay = ref(10000); // 10 segundos por defecto (para reducir carga)
+const isWindowActive = ref(true);
+const pendingMessages = ref(new Map()); // Para mensajes enviados pero no confirmados
+const lastPollTimestamp = ref(Math.floor(Date.now() / 1000));
 
 // Formulario para enviar mensajes
 const messageForm = useForm({
@@ -369,9 +429,161 @@ const messageForm = useForm({
     images: []
 });
 
+// Mostrar información de polling solo temporalmente
+let syncInfoTimeout;
+const showSyncInfo = () => {
+    isActivelyPolling.value = true;
+    lastPollingTime.value = new Date();
+
+    // Limpiar timeout existente antes de crear uno nuevo
+    if (syncInfoTimeout) {
+        clearTimeout(syncInfoTimeout);
+    }
+
+    // Ocultar información después de 3 segundos
+    syncInfoTimeout = setTimeout(() => {
+        isActivelyPolling.value = false;
+    }, 3000);
+};
+
 // Función para mostrar/ocultar panel en móvil
 const toggleSidebar = () => {
     showSidebar.value = !showSidebar.value;
+};
+
+// Calcular el último ID de mensaje conocido
+const updateLastMessageId = () => {
+    if (currentMessages.value.length > 0) {
+        const realMessages = currentMessages.value.filter(m => !String(m.id).startsWith('temp-'));
+        if (realMessages.length > 0) {
+            lastMessageId.value = Math.max(...realMessages.map(m => m.id));
+        }
+    }
+};
+
+// Función mejorada para obtener mensajes recientes
+// Función mejorada para obtener mensajes recientes sin activar el indicador de carga
+const fetchRecentMessages = async (forceRefresh = false) => {
+    try {
+        // Solo hacer polling si la ventana está activa o se fuerza la actualización
+        if ((!isWindowActive.value && !forceRefresh)) return;
+
+        // Si no ha pasado suficiente tiempo, no actualizamos a menos que sea forzado
+        const now = Math.floor(Date.now() / 1000);
+        const timeSinceLastPoll = now - lastPollTimestamp.value;
+
+        if (timeSinceLastPoll < 5 && !forceRefresh) {
+            return;
+        }
+
+        // Actualizar la UI para mostrar sincronización solo cuando es manual o hay actividad
+        if (forceRefresh) {
+            connectionStatus.value = 'syncing';
+            isLoading.value = true;
+            showSyncInfo();
+        }
+
+        // Guardar el timestamp actual
+        lastPollTimestamp.value = now;
+
+        // Usar la instancia silenciosa de Axios para evitar el indicador global
+        const response = await pollingAxios.get(route('messages.recent', props.contact.id), {
+            params: {
+                last_id: lastMessageId.value,
+                timestamp: lastPollTimestamp.value
+            }
+        });
+
+        // Procesar respuesta solo si hay mensajes nuevos o es una actualización forzada
+        if ((response.data.messages && response.data.messages.length > 0) || forceRefresh) {
+            if (response.data.messages && response.data.messages.length > 0) {
+                // Procesar cada mensaje nuevo
+                response.data.messages.forEach(message => {
+                    // Verificar si ya tenemos este mensaje (evitar duplicados)
+                    const exists = currentMessages.value.some(m => {
+                        return m.id === message.id ||
+                            (pendingMessages.value.has(m.id) &&
+                                pendingMessages.value.get(m.id) === message.id);
+                    });
+
+                    if (!exists) {
+                        // Reemplazar mensajes temporales correspondientes
+                        const tempIndex = currentMessages.value.findIndex(m => {
+                            return String(m.id).startsWith('temp-') &&
+                                m.content === message.content &&
+                                m.sender_id === message.sender_id;
+                        });
+
+                        if (tempIndex !== -1) {
+                            // Reemplazar mensaje temporal con el real
+                            const tempId = currentMessages.value[tempIndex].id;
+                            pendingMessages.value.set(tempId, message.id);
+                            currentMessages.value.splice(tempIndex, 1, message);
+                        } else {
+                            // Añadir nuevo mensaje
+                            currentMessages.value.push(message);
+                        }
+                    }
+                });
+
+                // Actualizar último ID
+                updateLastMessageId();
+
+                // Hacer scroll al fondo si hay mensajes nuevos
+                scrollToBottom();
+
+                // Mostrar info de sincronización
+                connectionStatus.value = 'synced';
+                showSyncInfo();
+            } else if (forceRefresh) {
+                // Si es un refresh manual, actualizar estado
+                connectionStatus.value = 'synced';
+                showSyncInfo();
+            }
+        }
+
+        // Ajustar el intervalo de polling según la actividad
+        if (response.data.messages && response.data.messages.length > 0) {
+            // Actualización más frecuente si hay actividad reciente
+            pollingDelay.value = 5000; // 5 segundos
+        } else if (response.data.throttled) {
+            // Reducir frecuencia si el servidor está limitando las peticiones
+            pollingDelay.value = Math.min(pollingDelay.value + 5000, 30000); // Máximo 30 segundos
+        }
+
+        isLoading.value = false;
+    } catch (error) {
+        console.error('Error al obtener mensajes recientes:', error);
+        connectionStatus.value = 'idle';
+        isLoading.value = false;
+    }
+};
+
+// Actualización manual (desde botón de refresh)
+const manualRefresh = () => {
+    fetchRecentMessages(true);
+};
+
+// Función para iniciar el polling
+// Función para iniciar el polling
+const startPolling = () => {
+    // Detener cualquier intervalo existente
+    stopPolling();
+
+    // Iniciar nuevo intervalo
+    pollingInterval.value = setInterval(() => {
+        fetchRecentMessages();
+    }, pollingDelay.value);
+
+    console.log(`🔄 Polling iniciado con intervalo de ${pollingDelay.value}ms`);
+};
+
+// Función para detener el polling
+const stopPolling = () => {
+    if (pollingInterval.value) {
+        clearInterval(pollingInterval.value);
+        pollingInterval.value = null;
+    }
 };
 
 // Manejar la selección de archivos
@@ -408,9 +620,39 @@ const openImagePreview = (imagePath) => {
     showImagePreview.value = true;
 };
 
-// Enviar mensaje
+// Enviar mensaje (versión optimizada para UI)
 const sendMessage = () => {
-    // Crear un objeto FormData para enviar el formulario con archivos
+    // Validar mensaje
+    if (!messageForm.content || messageForm.content.trim() === '') {
+        console.error("El contenido del mensaje no puede estar vacío");
+        return;
+    }
+
+    // Crear un mensaje temporal para mostrar inmediatamente (UI optimista)
+    const tempId = 'temp-' + Date.now();
+    const tempMessage = {
+        id: tempId,
+        sender_id: usePage().props.auth.user.id,
+        receiver_id: props.contact.id,
+        content: messageForm.content,
+        item_id: messageForm.item_id,
+        item_interest_id: messageForm.item_interest_id,
+        images: [],
+        read: false,
+        created_at: new Date().toISOString(),
+        sender: {
+            id: usePage().props.auth.user.id,
+            name: usePage().props.auth.user.name
+        }
+    };
+
+    // Añadir mensaje temporal a la lista
+    currentMessages.value.push(tempMessage);
+
+    // Hacer scroll al fondo
+    scrollToBottom();
+
+    // Crear y enviar FormData
     const formData = new FormData();
     formData.append('receiver_id', props.contact.id);
     formData.append('content', messageForm.content);
@@ -423,35 +665,48 @@ const sendMessage = () => {
         formData.append('item_interest_id', messageForm.item_interest_id);
     }
 
-    // Añadir las imágenes seleccionadas
+    // Añadir imágenes
     for (let i = 0; i < selectedFiles.value.length; i++) {
         formData.append(`images[${i}]`, selectedFiles.value[i]);
     }
 
-    console.log("Enviando mensaje a: ", props.contact.id);
+    // Resetear el formulario inmediatamente para mejor experiencia
+    const contentCopy = messageForm.content;
+    messageForm.content = '';
+    messageForm.item_id = null;
+    messageForm.item_interest_id = null;
+    selectedFiles.value = [];
+    imagePreviewUrls.value = [];
+    if (fileInput.value) {
+        fileInput.value.value = '';
+    }
 
-    // Enviar el formulario
-    messageForm.post(route('messages.store'), {
-        forceFormData: true,
-        data: formData,
-        preserveScroll: true,
-        onSuccess: () => {
-            console.log("✅ Mensaje enviado correctamente");
-            // Resetear el formulario
-            messageForm.reset('content', 'item_id', 'item_interest_id');
-            selectedFiles.value = [];
-            imagePreviewUrls.value = [];
-            if (fileInput.value) {
-                fileInput.value.value = '';
+    // Mostrar estado de sincronización
+    connectionStatus.value = 'syncing';
+    showSyncInfo();
+
+    // Enviar mensaje al servidor
+    axios.post(route('messages.store'), formData)
+        .then(response => {
+            // Forzar una actualización inmediata
+            fetchRecentMessages(true);
+
+            // Cambiar estado a sincronizado
+            connectionStatus.value = 'synced';
+        })
+        .catch(error => {
+            console.error("❌ Error al enviar mensaje:", error);
+
+            // Marcar el mensaje temporal como fallido
+            const failedIndex = currentMessages.value.findIndex(m => m.id === tempId);
+            if (failedIndex !== -1) {
+                currentMessages.value[failedIndex].failed = true;
+                currentMessages.value[failedIndex].content = contentCopy; // Restaurar contenido original
             }
 
-            // Hacer scroll al fondo
-            scrollToBottom();
-        },
-        onError: (errors) => {
-            console.error("❌ Error al enviar mensaje:", errors);
-        }
-    });
+            // Cambiar estado de conexión
+            connectionStatus.value = 'idle';
+        });
 };
 
 // Scroll al fondo del chat
@@ -516,124 +771,26 @@ const formatInterestStatus = (status) => {
     return statusMap[status] || status;
 };
 
-// Manejar la recepción de un nuevo mensaje a través de Echo
-const handleNewMessage = (e) => {
-    console.log("🔔 Evento de mensaje recibido:", e);
+// Manejar visibilidad de la página
+const handleVisibilityChange = () => {
+    isWindowActive.value = document.visibilityState === 'visible';
 
-    // Verificar si el mensaje es para esta conversación
-    const isSameConversation = (
-        (e.sender_id === props.contact.id && e.receiver_id === usePage().props.auth.user.id) ||
-        (e.sender_id === usePage().props.auth.user.id && e.receiver_id === props.contact.id)
-    );
+    if (isWindowActive.value) {
+        // Si la ventana está activa, hacer una actualización inmediata
+        fetchRecentMessages(true);
 
-    if (isSameConversation) {
-        console.log("👥 Mensaje relacionado con esta conversación");
-
-        // Verificar si el mensaje ya existe para evitar duplicados
-        const messageExists = currentMessages.value.some(m => m.id === e.id);
-
-        if (!messageExists) {
-            console.log("➕ Añadiendo nuevo mensaje a la conversación");
-            // Añadir mensaje a la lista
-            currentMessages.value.push(e);
-
-            // Marcar como leído si somos el destinatario
-            if (e.receiver_id === usePage().props.auth.user.id) {
-                fetch(route('messages.read', props.contact.id), {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    }
-                }).then(() => {
-                    console.log("✓ Mensaje marcado como leído");
-                }).catch(error => {
-                    console.error("❌ Error al marcar como leído:", error);
-                });
-            }
-
-            // Hacer scroll al fondo
-            scrollToBottom();
-
-            // Emitir evento global para actualizar la lista de conversaciones
-            if (window.emitter) {
-                console.log("📢 Emitiendo evento 'new-message' para actualizar lista de conversaciones");
-                window.emitter.emit('new-message', e);
-            }
-        } else {
-            console.log("⚠️ Mensaje duplicado, no se añade a la conversación");
-        }
+        // Reiniciar polling cada 10 segundos
+        pollingDelay.value = 10000;
+        startPolling();
     } else {
-        console.log("🔀 Mensaje pertenece a otra conversación");
-    }
-};
-
-// Configurar Echo para escuchar mensajes en tiempo real
-const setupEchoListeners = () => {
-    console.log(`Escuchando en canal: chat.${usePage().props.auth.user.id}`);
-
-    try {
-        // Primero, verificamos que Echo esté disponible
-        if (!window.Echo) {
-            console.error("Echo no está inicializado");
-            return;
-        }
-
-        // Suscribirse al canal personal
-        window.Echo.private(`chat.${usePage().props.auth.user.id}`)
-            .listen('.new.message', (data) => {
-                console.log('Mensaje recibido:', data);
-
-                // Convertir el objeto de datos en un formato compatible con la vista
-                const message = {
-                    id: data.id,
-                    sender_id: data.sender_id,
-                    receiver_id: data.receiver_id,
-                    content: data.content,
-                    item_id: data.item_id,
-                    item_interest_id: data.item_interest_id,
-                    images: data.images,
-                    read: data.read,
-                    created_at: data.created_at,
-                    sender: data.sender,
-                    receiver: data.receiver,
-                    item: data.item,
-                    interest: data.interest
-                };
-
-                // Usar la misma lógica que teníamos antes
-                const isSameConversation = (
-                    (message.sender_id === props.contact.id && message.receiver_id === usePage().props.auth.user.id) ||
-                    (message.sender_id === usePage().props.auth.user.id && message.receiver_id === props.contact.id)
-                );
-
-                if (isSameConversation) {
-                    // Verificar si el mensaje ya existe
-                    const messageExists = currentMessages.value.some(m => m.id === message.id);
-
-                    if (!messageExists) {
-                        // Añadir a la lista
-                        currentMessages.value.push(message);
-
-                        // Scroll al fondo
-                        scrollToBottom();
-                    }
-                }
-            })
-            .subscribed(() => {
-                console.log("✅ Suscrito al canal correctamente");
-            })
-            .error(error => {
-                console.error("❌ Error al suscribirse al canal:", error);
-            });
-    } catch (error) {
-        console.error("Error al configurar la escucha:", error);
+        // Reducir frecuencia de polling cuando la ventana está inactiva
+        pollingDelay.value = 30000; // 30 segundos
+        startPolling();
     }
 };
 
 // Al montar el componente
 onMounted(() => {
-    console.log("🔄 Componente de mensajes montado");
-
     // Verificar tamaño de la pantalla para decidir si mostrar el panel lateral
     const checkScreenSize = () => {
         if (window.innerWidth >= 768) { // md breakpoint en Tailwind
@@ -649,26 +806,60 @@ onMounted(() => {
     // Verificar al redimensionar
     window.addEventListener('resize', checkScreenSize);
 
+    // Inicializar último ID
+    updateLastMessageId();
+
+    // Iniciar polling con intervalo de 10 segundos
+    pollingDelay.value = 10000;
+    startPolling();
+
+    // Detectar cambios de visibilidad
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     // Hacer scroll al fondo
     scrollToBottom();
 
-    // Configurar Echo para mensajes en tiempo real
-    setupEchoListeners();
+    // Hacer una primera llamada para obtener mensajes recientes
+    fetchRecentMessages(true);
 
-    // Registrar que estamos listos para recibir mensajes
-    console.log("📨 Listo para recibir mensajes en tiempo real");
+    // Para compatibilidad, también intentamos configurar Echo si está disponible
+    if (window.Echo) {
+        try {
+            const currentUserId = usePage().props.auth.user.id;
+
+            window.Echo.private(`chat.${currentUserId}`)
+                .listen('.new.message', (data) => {
+                    // Forzar una actualización inmediata si se recibe un evento
+                    fetchRecentMessages(true);
+                });
+        } catch (error) {
+            console.log("No se pudo configurar Echo, usando solo polling");
+        }
+    }
 });
 
-// Limpiar listeners al desmontar el componente
+// Limpiar al desmontar el componente
 onBeforeUnmount(() => {
-    console.log("🧹 Limpiando listeners y desconectando de canales");
+    // Detener polling
+    stopPolling();
 
-    if (window.Echo) {
-        window.Echo.leave(`chat.${usePage().props.auth.user.id}`);
+    // Limpiar timeout de sincronización
+    if (syncInfoTimeout) {
+        clearTimeout(syncInfoTimeout);
     }
 
-    // Eliminar listener de resize
+    // Quitar listeners
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
     window.removeEventListener('resize', () => {});
+
+    // Desconectar de Echo si existe
+    if (window.Echo) {
+        try {
+            window.Echo.leave(`chat.${usePage().props.auth.user.id}`);
+        } catch (error) {
+            console.log("Error al desconectar de Echo, ignorado");
+        }
+    }
 });
 
 // Hacer scroll al fondo cuando cambia el número de mensajes
@@ -679,5 +870,6 @@ watch(() => currentMessages.value.length, () => {
 // Actualizar mensajes si cambia la prop
 watch(() => props.messages, (newMessages) => {
     currentMessages.value = [...newMessages];
-}, { deep: true });
+    updateLastMessageId();
+}, {deep: true});
 </script>

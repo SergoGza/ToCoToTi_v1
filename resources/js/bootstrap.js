@@ -33,12 +33,29 @@ window.Echo.channel('public-channel')
         alert('¡Evento de prueba recibido! El broadcasting funciona.');
     });
 
+// Añadir un interceptor para detectar peticiones de polling
+axios.interceptors.request.use(config => {
+    // Si la URL contiene 'recent' o hay un parámetro 'polling=true', marcarla como silenciosa
+    if (config.url.includes('/recent') || config.url.includes('polling=true')) {
+        config.headers['X-Inertia-Polling'] = 'true';
+        config.headers['X-Silent-Request'] = 'true';
+    }
+    return config;
+});
+
+
 // Registrar conexión exitosa
 window.Echo.connector.pusher.connection.bind('connected', () => {
     console.log('✅ Conectado a Pusher correctamente');
 });
 
+// Registrar cambios de estado de conexión
+window.Echo.connector.pusher.connection.bind('state_change', (states) => {
+    console.log(`Pusher connection state changed from ${states.previous} to ${states.current}`);
+});
+
 // Registrar errores de conexión
 window.Echo.connector.pusher.connection.bind('error', (err) => {
     console.error('❌ Error de conexión a Pusher:', err);
+    console.error('Detalles del error:', err);
 });
