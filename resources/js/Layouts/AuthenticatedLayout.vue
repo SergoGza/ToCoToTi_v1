@@ -63,6 +63,9 @@
                             <!-- Notificaciones Dropdown -->
                             <NotificationDropdown />
 
+                            <!-- Notificación de Mensajes -->
+                            <MessageNotification class="mr-3" />
+
                             <!-- Settings Dropdown -->
                             <div class="relative ms-3">
                                 <Dropdown align="right" width="48">
@@ -275,6 +278,8 @@ import Breadcrumb from '@/Components/Breadcrumb.vue';
 import DarkModeToggle from '@/Components/DarkModeToggle.vue';
 import { Link, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
+import MessageNotification from '@/Components/MessageNotification.vue';
+
 
 const showingNavigationDropdown = ref(false);
 

@@ -207,7 +207,14 @@ const props = defineProps({
 });
 
 // Copiar los filtros a un ref para poder modificarlos
-const filters = ref({...props.filters});
+const filters = ref({
+    search: props.filters?.search || '',
+    category: props.filters?.category || '',
+    condition: props.filters?.condition || '',
+    location: props.filters?.location || '',
+    sort_by: props.filters?.sort_by || 'created_at',
+    sort_order: props.filters?.sort_order || 'desc'
+});
 
 // Método para realizar la búsqueda
 const search = () => {

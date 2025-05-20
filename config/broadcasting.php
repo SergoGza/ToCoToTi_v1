@@ -18,18 +18,18 @@ return [
 
     'connections' => [
 
-        'pusher' => [
-            'driver' => 'pusher',
-            'key'    => env('PUSHER_APP_KEY'),
-            'secret' => env('PUSHER_APP_SECRET'),
-            'app_id' => env('PUSHER_APP_ID'),
+        'reverb' => [
+            'driver' => 'reverb',
+            'key' => env('REVERB_APP_KEY', 'tocototi-key'),
+            'secret' => env('REVERB_APP_SECRET', 'tocototi-secret'),
+            'app_id' => env('REVERB_APP_ID', 'tocototi'),
+            'host' => env('REVERB_HOST', '127.0.0.1'),
+            'port' => env('REVERB_PORT', 8080),
+            'scheme' => env('REVERB_SCHEME', 'http'),
             'options' => [
-                'cluster' => env('PUSHER_APP_CLUSTER', 'eu'),
-                'host' => env('PUSHER_HOST', '127.0.0.1'),
-                'port' => env('PUSHER_PORT', 6001),
-                'scheme' => env('PUSHER_SCHEME', 'http'),
-                'encrypted' => true,
-                'useTLS' => env('PUSHER_SCHEME', 'http') === 'https',
+                'cluster' => 'mt1',
+                'encrypted' => false,
+                'useTLS' => env('REVERB_SCHEME', 'https') === 'https',
             ],
         ],
 

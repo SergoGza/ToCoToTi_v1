@@ -13,4 +13,7 @@ use Illuminate\Support\Facades\Broadcast;
 |
 */
 
-// Puedes dejar este archivo vacío por ahora
+// Canal privado para mensajería entre usuarios
+Broadcast::channel('user.{id}', function ($user, $id) {
+    return (int) $user->id === (int) $id;
+});

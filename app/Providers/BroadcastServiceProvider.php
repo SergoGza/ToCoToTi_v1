@@ -9,7 +9,6 @@ class BroadcastServiceProvider extends ServiceProvider
 {
     public function boot()
     {
-        // Usar configuración básica sin middleware adicional para pruebas
         Broadcast::routes();
 
         require base_path('routes/channels.php');

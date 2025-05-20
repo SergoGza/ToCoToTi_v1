@@ -6,7 +6,9 @@ import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createApp, h } from 'vue';
 import { ZiggyVue } from '../../vendor/tightenco/ziggy';
 
-
+// Importar Echo y Pusher después de las otras importaciones
+import Echo from 'laravel-echo';
+import Pusher from 'pusher-js';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
@@ -70,6 +72,46 @@ const setupToastNotifications = () => {
     window.showInfoToast = (message, duration = 5000) => window.showToast(message, 'info', duration);
     window.showWarningToast = (message, duration = 5000) => window.showToast(message, 'warning', duration);
 };
+
+// Configuración de Echo - Colocada después de las funciones de setup
+window.Pusher = Pusher;
+
+// Configuración segura de Echo
+document.addEventListener('DOMContentLoaded', () => {
+    if (document.querySelector('meta[name="user-id"]')) {
+        window.userId = document.querySelector('meta[name="user-id"]').getAttribute('content');
+
+        window.Echo = new Echo({
+            broadcaster: 'pusher',
+            key: 'tocototi-key',
+            wsHost: window.location.hostname,
+            wsPort: 8080,
+            forceTLS: false,
+            disableStats: true,
+            enabledTransports: ['ws', 'wss'],
+            cluster: 'mt1',
+            encrypted: false,
+            authorizer: (channel, options) => {
+                return {
+                    authorize: (socketId, callback) => {
+                        axios.post('/broadcasting/auth', {
+                            socket_id: socketId,
+                            channel_name: channel.name
+                        })
+                            .then(response => {
+                                callback(false, response.data);
+                            })
+                            .catch(error => {
+                                callback(true, error);
+                            });
+                    }
+                };
+            },
+        });
+
+        console.log('Echo inicializado para el usuario ID:', window.userId);
+    }
+});
 
 // Ejecutar la configuración del modo oscuro
 setupDarkMode();

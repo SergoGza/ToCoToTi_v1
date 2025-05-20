@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
+    @auth
+        <meta name="user-id" content="{{ Auth::id() }}">
+    @endauth
+
     <title inertia>{{ config('app.name', 'Laravel') }}</title>
 
     <!-- Script para inicializar el tema oscuro -->
