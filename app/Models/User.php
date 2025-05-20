@@ -79,44 +79,20 @@ class User extends Authenticatable
     /**
      * Mensajes enviados por este usuario.
      */
-    public function sentMessages()
-    {
-        return $this->hasMany(Message::class, 'sender_id');
-    }
+
 
     /**
      * Mensajes recibidos por este usuario.
      */
-    public function receivedMessages()
-    {
-        return $this->hasMany(Message::class, 'receiver_id');
-    }
+
 
     /**
      * Contar mensajes no leídos.
      */
-    public function unreadMessagesCount()
-    {
-        return $this->receivedMessages()->where('read', false)->count();
-    }
+
 
     /**
      * Obtener conversaciones (usuarios con los que se ha intercambiado mensajes).
      */
-    public function conversations()
-    {
-        $sentToUserIds = $this->sentMessages()
-            ->select('receiver_id')
-            ->distinct()
-            ->pluck('receiver_id');
 
-        $receivedFromUserIds = $this->receivedMessages()
-            ->select('sender_id')
-            ->distinct()
-            ->pluck('sender_id');
-
-        $userIds = $sentToUserIds->merge($receivedFromUserIds)->unique();
-
-        return User::whereIn('id', $userIds)->get();
-    }
 }

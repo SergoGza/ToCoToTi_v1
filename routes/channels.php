@@ -13,10 +13,4 @@ use Illuminate\Support\Facades\Broadcast;
 |
 */
 
-// Canal privado para cada usuario para mensajes
-// El callback de autorización verifica que el usuario solo pueda acceder a su propio canal
-Broadcast::channel('chat.{userId}', function ($user, $userId) {
-    return (int) $user->id === (int) $userId;
-});
-
-// Si necesitas más canales en el futuro, puedes definirlos aquí
+// Puedes dejar este archivo vacío por ahora

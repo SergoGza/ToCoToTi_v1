@@ -51,13 +51,7 @@
                                 <NavLink :href="route('interests.received')" :active="route().current('interests.received')">
                                     Intereses Recibidos
                                 </NavLink>
-                                <NavLink :href="route('messages.index')" :active="route().current('messages.*')" class="relative">
-                                    Mensajes
-                                    <span v-if="unreadMessagesCount > 0"
-                                          class="absolute -top-1 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                                        {{ unreadMessagesCount > 9 ? '9+' : unreadMessagesCount }}
-                                    </span>
-                                </NavLink>
+
                             </div>
                         </div>
 
@@ -202,17 +196,7 @@
                         >
                             Intereses Recibidos
                         </ResponsiveNavLink>
-                        <ResponsiveNavLink
-                            :href="route('messages.index')"
-                            :active="route().current('messages.*')"
-                            class="relative"
-                        >
-                            Mensajes
-                            <span v-if="unreadMessagesCount > 0"
-                                  class="absolute right-4 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                                {{ unreadMessagesCount > 9 ? '9+' : unreadMessagesCount }}
-                            </span>
-                        </ResponsiveNavLink>
+
                         <ResponsiveNavLink
                             :href="route('notifications.index')"
                             :active="route().current('notifications.index')"
@@ -293,7 +277,7 @@ import { Link, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 
 const showingNavigationDropdown = ref(false);
-const unreadMessagesCount = ref(0);
+
 const loadingIndicator = ref(null);
 const toastNotification = ref(null);
 const isDarkMode = ref(false);
@@ -352,25 +336,6 @@ onMounted(() => {
         }
     );
 
-    // Obtener el conteo de mensajes no leídos cuando se monta el componente
-    try {
-        // Creamos un nuevo endpoint para obtener este conteo
-        axios.get('/api/unread-messages-count', {
-            headers: { 'X-No-Loading': 'true' } // Evitar mostrar el loader para esta petición específica
-        }).then(response => {
-            unreadMessagesCount.value = response.data.count;
-
-            // Actualizar el conteo cada 30 segundos
-            setInterval(async () => {
-                const refreshResponse = await axios.get('/api/unread-messages-count', {
-                    headers: { 'X-No-Loading': 'true' }
-                });
-                unreadMessagesCount.value = refreshResponse.data.count;
-            }, 30000);
-        });
-    } catch (error) {
-        console.error('Error al obtener el conteo de mensajes no leídos:', error);
-    }
 
     // Añadir escucha para flash messages de Inertia
     const page = usePage();

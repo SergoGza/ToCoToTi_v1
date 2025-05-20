@@ -80,18 +80,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/notifications/mark-all-as-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.markAllAsRead');
     Route::get('/api/unread-notifications', [NotificationController::class, 'getUnreadNotifications'])->name('api.unreadNotifications');
 
-    // Rutas para mensajes
-    Route::get('/messages', [MessageController::class, 'index'])->name('messages.index');
-    Route::get('/messages/{contact}', [MessageController::class, 'show'])->name('messages.show');
-    Route::post('/messages', [MessageController::class, 'store'])->name('messages.store');
-    Route::post('/messages/{contact}/read', [MessageController::class, 'markAsRead'])->name('messages.read');
-    Route::get('/items/{item}/message', [MessageController::class, 'createFromItem'])->name('messages.fromItem');
-    Route::get('/interests/{interest}/message', [MessageController::class, 'createFromInterest'])->name('messages.fromInterest');
-    Route::get('/messages/{contact}/recent', [MessageController::class, 'getRecentMessages'])
-        ->name('messages.recent');
 
-    // Nueva ruta para el conteo de mensajes no leídos
-    Route::get('/api/unread-messages-count', [MessageController::class, 'getUnreadCount'])->name('api.unreadMessagesCount');
+
+
 });
 
 require __DIR__.'/auth.php';
