@@ -305,9 +305,7 @@ class ItemController extends Controller
                 $interest->save();
 
                 // Notificar a los usuarios
-                if (class_exists('App\Services\NotificationService')) {
-                    NotificationService::createInterestStatusChangedNotification($interest, 'accepted', 'pending');
-                }
+                // Podríamos crear una notificación específica de "item vuelve a estar disponible"
             }
         }
 
@@ -331,19 +329,17 @@ class ItemController extends Controller
                 ->update(['status' => 'rejected']);
 
             // Notificar al usuario seleccionado
-            if (class_exists('App\Services\NotificationService')) {
-                NotificationService::createInterestAcceptedNotification($selectedInterest);
+            NotificationService::createInterestAcceptedNotification($selectedInterest);
 
-                // Notificar a los demás usuarios
-                NotificationService::createItemReservedForOthersNotification($item, $selectedInterest->user_id);
-            }
+            // Notificar a los demás usuarios
+            NotificationService::createItemReservedForOthersNotification($item, $selectedInterest->user_id);
         }
 
         // Si cambia a entregado, notificar al usuario al que fue entregado
         if ($request->status === 'given' && $oldStatus === 'reserved') {
             $acceptedInterest = $item->interests()->where('status', 'accepted')->first();
 
-            if ($acceptedInterest && class_exists('App\Services\NotificationService')) {
+            if ($acceptedInterest) {
                 NotificationService::createItemGivenNotification($item, $acceptedInterest->user_id);
             }
         }

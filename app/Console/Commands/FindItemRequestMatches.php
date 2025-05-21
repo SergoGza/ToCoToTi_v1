@@ -5,8 +5,8 @@ namespace App\Console\Commands;
 use App\Models\Item;
 use App\Models\Request as ItemRequest;
 use App\Models\User;
-use App\Notifications\MatchingItemsFound;
 use App\Services\MatchingService;
+use App\Services\NotificationService;
 use Illuminate\Console\Command;
 
 class FindItemRequestMatches extends Command
@@ -36,7 +36,7 @@ class FindItemRequestMatches extends Command
         $this->processActiveRequests($matchingService);
 
         // También podríamos procesar nuevos ítems para buscar solicitudes coincidentes
-        // $this->processNewItems($matchingService);
+        $this->processNewItems($matchingService);
 
         $this->info('Proceso de búsqueda de coincidencias completado');
 
@@ -66,8 +66,8 @@ class FindItemRequestMatches extends Command
             if ($matchingItems->count() > 0) {
                 $this->info("Encontradas {$matchingItems->count()} coincidencias para la solicitud #{$request->id}");
 
-                // Notificar al usuario si hay coincidencias
-                $request->user->notify(new MatchingItemsFound($matchingItems, $request));
+                // Crear una notificación para el usuario
+                NotificationService::createMatchingItemsNotification($request, $matchingItems->count());
 
                 // Guardar relación de que esta solicitud ha sido notificada
                 $request->notifications()->create([
@@ -99,8 +99,21 @@ class FindItemRequestMatches extends Command
             if ($matchingRequests->count() > 0) {
                 $this->info("Encontradas {$matchingRequests->count()} solicitudes coincidentes para el ítem #{$item->id}");
 
-                // Implementar notificación para solicitudes coincidentes si lo necesitas
-                // Similar a MatchingItemsFound pero para solicitudes
+                // Notificar a los usuarios con solicitudes coincidentes
+                foreach ($matchingRequests as $request) {
+                    // Crear notificación
+                    $notification = new \App\Models\Notification([
+                        'user_id' => $request->user_id,
+                        'type' => 'matching_item',
+                        'message' => "Se ha publicado un ítem \"{$item->title}\" que coincide con tu solicitud \"{$request->title}\"",
+                        'link' => route('items.show', $item->id),
+                        'related_id' => $item->id,
+                        'related_type' => 'item',
+                        'read' => false
+                    ]);
+
+                    $notification->save();
+                }
             }
         }
     }

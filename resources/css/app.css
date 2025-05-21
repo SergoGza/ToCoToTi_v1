@@ -2,3 +2,30 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+    /* Colores corporativos principales */
+    --primary: #00913F;     /* Verde corporativo */
+    --secondary: #825028;   /* Tierra/Marrón */
+
+    /* Colores base */
+    --white: #FFFFFF;       /* Fondos principales */
+    --text-dark: #333333;   /* Texto principal */
+    --bg-light: #EEEEEE;    /* Fondos suaves */
+
+    /* Variaciones para elementos interactivos */
+    --primary-light: #26A65B; /* Verde más claro para hover */
+    --primary-dark: #00782F;  /* Verde más oscuro para activo */
+    --secondary-light: #9B6C3F; /* Marrón más claro */
+    --secondary-dark: #6A4020; /* Marrón más oscuro */
+
+    /* Estados de elementos */
+    --success: #00913F;     /* Usando el verde corporativo */
+    --warning: #F39C12;     /* Amarillo naranja para advertencias */
+    --error: #E74C3C;       /* Rojo para errores */
+    --info: #3498DB;        /* Azul para información */
+
+    /* Colores para modo oscuro */
+    --dark-bg: #1A1A1A;
+    --dark-surface: #333333;
+    --dark-text: #F5F5F5;
+}
