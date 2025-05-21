@@ -173,7 +173,12 @@ onMounted(() => {
 const fetchNotifications = async () => {
     loading.value = true;
     try {
-        const response = await axios.get(route('api.unreadNotifications'));
+        const response = await axios.get(route('api.unreadNotifications'), {
+            headers: {
+                'X-No-Loading': 'true', // Añadimos este header para evitar el indicador de carga
+                'X-Inertia-Polling': 'true'
+            }
+        });
         notifications.value = response.data.notifications;
         unreadCount.value = response.data.count;
     } catch (error) {

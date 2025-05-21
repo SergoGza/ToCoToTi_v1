@@ -3,8 +3,6 @@ window.axios = axios;
 
 window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
-
-
 // Obtener el token CSRF de la meta tag
 const token = document.head.querySelector('meta[name="csrf-token"]');
 if (token) {
@@ -16,9 +14,13 @@ if (token) {
 // Añadir un interceptor para detectar peticiones de polling
 axios.interceptors.request.use(config => {
     // Si la URL contiene 'recent' o hay un parámetro 'polling=true', marcarla como silenciosa
-    if (config.url.includes('/recent') || config.url.includes('polling=true')) {
+    if (config.url.includes('/recent') ||
+        config.url.includes('polling=true') ||
+        config.url.includes('unread-messages') ||
+        config.url.includes('unread-notifications')) {
         config.headers['X-Inertia-Polling'] = 'true';
         config.headers['X-Silent-Request'] = 'true';
+        config.headers['X-No-Loading'] = 'true';
     }
     return config;
 });

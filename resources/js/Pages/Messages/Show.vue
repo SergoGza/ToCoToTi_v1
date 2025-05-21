@@ -77,6 +77,7 @@
 import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import { usePage } from '@inertiajs/vue3';
 
 // Props
 const props = defineProps({
@@ -146,16 +147,44 @@ const formatTime = (dateString) => {
 };
 
 // Send a message
+const page = usePage();
 const sendMessage = () => {
-  if (!form.content.trim()) return;
+    if (!form.content.trim()) return;
 
-  form.post(route('messages.send', props.conversation.id), {
-    preserveScroll: true,
-    onSuccess: () => {
-      form.content = '';
-      scrollToBottom();
-    }
-  });
+    // Añadir el mensaje local inmediatamente para UI optimista
+    messagesList.value.push({
+        id: 'temp-' + Date.now(),
+        content: form.content,
+        user_id: page.props.auth.user.id,
+        created_at: new Date().toISOString(),
+        user: {
+            name: page.props.auth.user.name
+        }
+    });
+
+    // Hacer scroll
+    scrollToBottom();
+
+    // Guardar una referencia al contenido
+    const originalContent = form.content;
+
+    // Limpiar el formulario visualmente
+    form.content = '';
+
+    // Iniciar la petición usando axios en lugar del objeto form
+    // Esto evita los comportamientos automáticos de restablecimiento de Inertia
+    axios.post(route('messages.send', props.conversation.id), {
+        content: originalContent
+    }, {
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'X-No-Loading': 'true'
+        }
+    })
+        .catch(error => {
+            console.error('Error al enviar mensaje:', error);
+            window.showToast('Error al enviar el mensaje', 'error');
+        });
 };
 
 // Echo setup for real-time messages

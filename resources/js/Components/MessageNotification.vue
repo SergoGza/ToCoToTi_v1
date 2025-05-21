@@ -26,6 +26,7 @@ const getUnreadCount = async () => {
             headers: {
                 'X-Silent-Request': 'true',
                 'X-Inertia-Polling': 'true',
+                'X-No-Loading': 'true'  // Añadimos este header para evitar el indicador de carga
             }
         });
         unreadCount.value = response.data.count;
@@ -46,7 +47,8 @@ onMounted(() => {
             });
     }
 
-    // Configurar polling cada minuto para mantener actualizado el contador
+    // Configurar polling cada 60 segundos para mantener actualizado el contador
+    // Aumentamos el intervalo para reducir las solicitudes frecuentes
     polling = setInterval(getUnreadCount, 60000); // Cada minuto
 });
 

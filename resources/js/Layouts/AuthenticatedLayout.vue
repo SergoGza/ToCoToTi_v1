@@ -341,7 +341,6 @@ onMounted(() => {
         }
     );
 
-
     // Añadir escucha para flash messages de Inertia
     const page = usePage();
     if (page.props.flash) {
