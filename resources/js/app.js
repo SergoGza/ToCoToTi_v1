@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
         window.userId = document.querySelector('meta[name="user-id"]').getAttribute('content');
 
         window.Echo = new Echo({
-            broadcaster: 'pusher',
+            broadcaster: 'reverb',
             key: 'tocototi-key',
             wsHost: window.location.hostname,
             wsPort: 8080,

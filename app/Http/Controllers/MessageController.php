@@ -123,7 +123,7 @@ class MessageController extends Controller
         $conversation->save();
 
         // Emitir evento
-//        broadcast(new NewMessageEvent($message))->toOthers();
+        broadcast(new NewMessageEvent($message))->toOthers();
 
         return back();
     }
@@ -188,7 +188,7 @@ class MessageController extends Controller
             $conversation->messages()->save($message);
 
             // Emitir evento
-//            broadcast(new NewMessageEvent($message))->toOthers();
+            broadcast(new NewMessageEvent($message))->toOthers();
         }
 
         return redirect()->route('messages.show', $conversation->id);
@@ -228,7 +228,7 @@ class MessageController extends Controller
             $conversation->messages()->save($message);
 
             // Emitir evento
-//            broadcast(new NewMessageEvent($message))->toOthers();
+            broadcast(new NewMessageEvent($message))->toOthers();
         }
 
         return redirect()->route('messages.show', $conversation->id);
