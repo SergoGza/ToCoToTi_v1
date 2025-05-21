@@ -83,30 +83,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
         window.Echo = new Echo({
             broadcaster: 'reverb',
-            key: 'tocototi-key',
+            key: import.meta.env.VITE_REVERB_APP_KEY,
             wsHost: window.location.hostname,
-            wsPort: 8080,
+            wsPort: import.meta.env.VITE_REVERB_PORT || 8080,
             forceTLS: false,
             disableStats: true,
+            debug: true,  // Importante para más logs
             enabledTransports: ['ws', 'wss'],
             cluster: 'mt1',
             encrypted: false,
-            authorizer: (channel, options) => {
-                return {
-                    authorize: (socketId, callback) => {
-                        axios.post('/broadcasting/auth', {
-                            socket_id: socketId,
-                            channel_name: channel.name
+
+            authorizer: (channel, options) => ({
+                authorize: (socketId, callback) => {
+                    console.log('Intentando autorización de canal:', channel.name);
+
+                    axios.post('/broadcasting/auth', {
+                        socket_id: socketId,
+                        channel_name: channel.name
+                    })
+                        .then(response => {
+                            console.log('Autorización exitosa:', response.data);
+                            callback(false, response.data);
                         })
-                            .then(response => {
-                                callback(false, response.data);
-                            })
-                            .catch(error => {
-                                callback(true, error);
-                            });
-                    }
-                };
-            },
+                        .catch(error => {
+                            console.error('Error de autorización:', error);
+                            callback(true, error);
+                        });
+                }
+            }),
         });
 
         console.log('Echo inicializado para el usuario ID:', window.userId);

@@ -15,5 +15,6 @@ use Illuminate\Support\Facades\Broadcast;
 
 // Canal privado para mensajería entre usuarios
 Broadcast::channel('user.{id}', function ($user, $id) {
+    \Log::info("Canal solicitado: user.{$id}, Usuario autenticado: " . ($user ? $user->id : 'No autenticado'));
     return (int) $user->id === (int) $id;
 });

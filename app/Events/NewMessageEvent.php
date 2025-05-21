@@ -10,6 +10,7 @@ use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 
 class NewMessageEvent implements ShouldBroadcast
 {
@@ -20,8 +21,13 @@ class NewMessageEvent implements ShouldBroadcast
     public function __construct(Message $message)
     {
         $this->message = $message;
-        // Asegurarnos de cargar la relación usuario
-        $this->message->load('user');
+
+        // Log de depuración al crear el evento
+        Log::channel('broadcasting')->info('NewMessageEvent creado', [
+            'message_id' => $message->id,
+            'conversation_id' => $message->conversation_id,
+            'user_id' => $message->user_id
+        ]);
     }
 
     public function broadcastOn(): array
@@ -31,12 +37,21 @@ class NewMessageEvent implements ShouldBroadcast
             ? $conversation->user2_id
             : $conversation->user1_id;
 
+        // Log de depuración
+        \Log::channel('broadcasting')->debug('Broadcasting canal', [
+            'canal' => "user.{$recipientId}",
+            'mensaje_id' => $this->message->id,
+            'conversacion_id' => $conversation->id,
+            'remitente_id' => $this->message->user_id,
+            'receptor_id' => $recipientId
+        ]);
+
         return [
             new PrivateChannel('user.' . $recipientId),
         ];
     }
 
-    public function broadcastWith(): array
+    public function broadcastWith()
     {
         return [
             'message' => [
@@ -46,8 +61,17 @@ class NewMessageEvent implements ShouldBroadcast
                 'user_id' => $this->message->user_id,
                 'user_name' => $this->message->user->name,
                 'created_at' => $this->message->created_at,
-                'read' => $this->message->read,
             ]
         ];
+    }
+
+
+    // Método para manejar errores de broadcasting
+    public function broadcastException(\Throwable $exception)
+    {
+        Log::channel('broadcasting')->error('Broadcasting error', [
+            'message' => $exception->getMessage(),
+            'trace' => $exception->getTraceAsString()
+        ]);
     }
 }

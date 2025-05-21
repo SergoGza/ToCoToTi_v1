@@ -10,6 +10,7 @@ use App\Models\Message;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class MessageController extends Controller
@@ -99,6 +100,15 @@ class MessageController extends Controller
      */
     public function sendMessage(Request $request, Conversation $conversation)
     {
+        // Log inicial de depuración
+        Log::channel('broadcasting')->info('Iniciando envío de mensaje', [
+            'conversation_id' => $conversation->id,
+            'user_id' => Auth::id(),
+            'broadcasting_driver' => config('broadcasting.default'),
+            'reverb_key' => config('broadcasting.connections.reverb.key'),
+            'payload' => $request->all()
+        ]);
+
         $request->validate([
             'content' => 'required|string',
         ]);
@@ -107,25 +117,60 @@ class MessageController extends Controller
 
         // Verificar que el usuario es parte de la conversación
         if ($conversation->user1_id !== $user->id && $conversation->user2_id !== $user->id) {
+            Log::channel('broadcasting')->warning('Usuario no autorizado', [
+                'user_id' => $user->id,
+                'conversation_id' => $conversation->id
+            ]);
             return redirect()->route('messages.index')->with('error', 'No tienes permiso para enviar mensajes en esta conversación');
         }
 
-        // Crear mensaje
-        $message = new Message([
-            'content' => $request->content,
-            'user_id' => $user->id,
-        ]);
+        try {
+            // Crear mensaje
+            $message = new Message([
+                'content' => $request->content,
+                'user_id' => $user->id,
+            ]);
 
-        $conversation->messages()->save($message);
+            $conversation->messages()->save($message);
 
-        // Actualizar timestamp de último mensaje
-        $conversation->last_message_at = now();
-        $conversation->save();
+            // Actualizar timestamp de último mensaje
+            $conversation->last_message_at = now();
+            $conversation->save();
 
-        // Emitir evento
-        broadcast(new NewMessageEvent($message))->toOthers();
+            // Log antes de broadcasting
+            Log::channel('broadcasting')->info('Preparando broadcast', [
+                'message_id' => $message->id,
+                'conversation_id' => $conversation->id,
+                'recipient_id' => $conversation->user1_id === $user->id
+                    ? $conversation->user2_id
+                    : $conversation->user1_id
+            ]);
 
-        return back();
+            // Emitir evento con manejo de errores
+            try {
+                broadcast(new NewMessageEvent($message))->toOthers();
+
+                Log::channel('broadcasting')->info('Broadcast enviado con éxito', [
+                    'message_id' => $message->id
+                ]);
+            } catch (\Exception $broadcastException) {
+                Log::channel('broadcasting')->error('Error en broadcast', [
+                    'message' => $broadcastException->getMessage(),
+                    'trace' => $broadcastException->getTraceAsString(),
+                    'message_id' => $message->id
+                ]);
+            }
+
+            return back();
+
+        } catch (\Exception $e) {
+            Log::channel('broadcasting')->error('Error al procesar mensaje', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return back()->with('error', 'No se pudo enviar el mensaje');
+        }
     }
 
     /**

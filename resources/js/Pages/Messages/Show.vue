@@ -162,52 +162,33 @@ const sendMessage = () => {
 onMounted(() => {
   scrollToBottom();
 
-  // Setup Echo
+  // Configuración de Echo con verificación explícita de la conversación
   if (window.Echo && window.userId) {
     try {
       window.Echo.private(`user.${window.userId}`)
           .listen('NewMessageEvent', (event) => {
-            console.log('Mensaje recibido:', event);
+            // Extracción del mensaje con verificación de estructura
+            const messageData = event.message || event;
 
-            // Identificar la estructura del mensaje recibido
-            let messageData = {};
-
-            // Extraer los datos relevantes del evento
-            if (event.message) {
-              // Caso 1: El evento contiene una propiedad message
-              messageData = event.message;
-            } else if (event.content) {
-              // Caso 2: El evento es el mensaje en sí
-              messageData = event;
-            } else {
-              // Caso 3: Estructura desconocida
-              console.warn('Estructura de evento desconocida:', event);
-              return; // No procesamos este mensaje
-            }
-
-            // Verificar si este mensaje pertenece a esta conversación
+            // Verificación explícita de la conversación
             if (messageData.conversation_id == props.conversation.id) {
-              // Crear un objeto de mensaje bien formado
               const newMessage = {
-                id: messageData.id || Date.now(), // Usar timestamp como id si no hay id
+                id: messageData.id || Date.now(),
                 conversation_id: messageData.conversation_id,
                 user_id: messageData.user_id,
-                content: messageData.content, // El contenido se procesará con extractMessageContent al mostrarlo
+                content: messageData.content,
                 created_at: messageData.created_at || new Date().toISOString(),
                 user: {
                   id: messageData.user_id,
-                  name: (messageData.user && messageData.user.name) ||
-                      messageData.user_name || 'Usuario'
+                  name: (messageData.user?.name || messageData.user_name || 'Usuario')
                 }
               };
 
-              // Añadir a la lista de mensajes y hacer scroll
+              // Añadir mensaje y hacer scroll
               messagesList.value.push(newMessage);
               scrollToBottom();
             }
           });
-
-      console.log('Echo configurado correctamente para el canal user.' + window.userId);
     } catch (error) {
       console.error('Error al configurar Echo:', error);
     }
