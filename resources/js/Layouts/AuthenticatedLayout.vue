@@ -4,7 +4,7 @@
         <!-- Debugger para probar el modo oscuro -->
         <div v-if="false" class="bg-white dark:bg-black p-4 dark:text-white text-center text-xl">
             TEMA ACTUAL: {{ isDarkMode ? 'OSCURO' : 'CLARO' }}
-            <button @click="window.toggleDarkMode()" class="ml-4 bg-blue-500 p-2 rounded text-white">
+            <button @click="window.toggleDarkMode()" class="ml-4 bg-primary p-2 rounded text-white">
                 Cambiar tema manualmente
             </button>
         </div>
@@ -303,11 +303,13 @@ onMounted(() => {
     axios.interceptors.request.use(
         (config) => {
             // Si la petición no tiene un header personalizado para evitar el loader
-            if (!config.headers['X-No-Loading']) {
+            if (!config.headers['X-No-Loading'] && !config.headers['X-Silent-Request']) {
                 if (loadingIndicator.value) {
-                    loadingIndicator.value.showLoading();
+                    loadingIndicator.value.showLoading('Cargando...');
                 } else {
-                    window.dispatchEvent(new CustomEvent('show-loading'));
+                    window.dispatchEvent(new CustomEvent('show-loading', {
+                        detail: { message: 'Cargando...' }
+                    }));
                 }
             }
             return config;
@@ -340,6 +342,7 @@ onMounted(() => {
             return Promise.reject(error);
         }
     );
+
 
     // Añadir escucha para flash messages de Inertia
     const page = usePage();

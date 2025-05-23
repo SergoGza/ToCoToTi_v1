@@ -1,4 +1,3 @@
-<!-- resources/js/Components/ToastNotification.vue -->
 <template>
     <div class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2">
         <transition-group
@@ -11,7 +10,7 @@
                 :key="toast.id"
                 class="p-4 max-w-md rounded-lg shadow-lg transform transition-all duration-300 dark:border dark:border-opacity-10"
                 :class="{
-                    'bg-green-100 border border-green-400 text-green-700 dark:bg-green-900 dark:text-green-100': toast.type === 'success',
+                    'bg-primary-light/20 border border-primary text-primary-dark dark:bg-primary-dark/30 dark:text-primary-light': toast.type === 'success',
                     'bg-red-100 border border-red-400 text-red-700 dark:bg-red-900 dark:text-red-100': toast.type === 'error',
                     'bg-blue-100 border border-blue-400 text-blue-700 dark:bg-blue-900 dark:text-blue-100': toast.type === 'info',
                     'bg-yellow-100 border border-yellow-400 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-100': toast.type === 'warning'
@@ -20,7 +19,7 @@
                 <div class="flex justify-between items-start">
                     <div class="flex items-center">
                         <!-- Icono basado en el tipo -->
-                        <svg v-if="toast.type === 'success'" class="h-6 w-6 mr-2 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg v-if="toast.type === 'success'" class="h-6 w-6 mr-2 text-primary dark:text-primary-light" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                         <svg v-else-if="toast.type === 'error'" class="h-6 w-6 mr-2 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -50,7 +49,7 @@
                     <div
                         class="h-1 rounded-full transition-all duration-100"
                         :class="{
-                            'bg-green-500 dark:bg-green-400': toast.type === 'success',
+                            'bg-primary dark:bg-primary-light': toast.type === 'success',
                             'bg-red-500 dark:bg-red-400': toast.type === 'error',
                             'bg-blue-500 dark:bg-blue-400': toast.type === 'info',
                             'bg-yellow-500 dark:bg-yellow-400': toast.type === 'warning'

@@ -147,15 +147,27 @@ const hasUnreadNotifications = computed(() => {
 
 // Marcar una notificación como leída
 const markAsRead = (notification) => {
-    useForm({}).patch(route('notifications.markAsRead', notification.id), {
-        preserveScroll: true
+    const form = useForm({});
+
+    form.patch(route('notifications.markAsRead', notification.id), {
+        preserveScroll: true,
+        preserveState: true,
+        onError: (errors) => {
+            console.error('Error al marcar como leída:', errors);
+        }
     });
 };
 
 // Marcar todas las notificaciones como leídas
 const markAllAsRead = () => {
-    useForm({}).post(route('notifications.markAllAsRead'), {
-        preserveScroll: true
+    const form = useForm({});
+
+    form.post(route('notifications.markAllAsRead'), {
+        preserveScroll: true,
+        preserveState: true,
+        onError: (errors) => {
+            console.error('Error al marcar todas como leídas:', errors);
+        }
     });
 };
 

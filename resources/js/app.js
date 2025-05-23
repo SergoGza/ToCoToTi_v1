@@ -117,9 +117,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+
+
+// Función para actualizar el token CSRF
+const updateCsrfToken = () => {
+    const token = document.head.querySelector('meta[name="csrf-token"]');
+    if (token) {
+        window.axios.defaults.headers.common['X-CSRF-TOKEN'] = token.content;
+    }
+};
+
 // Ejecutar la configuración del modo oscuro
 setupDarkMode();
 setupToastNotifications();
+
+// Asegurarse de que el token CSRF esté actualizado
+document.addEventListener('DOMContentLoaded', updateCsrfToken);
 
 // Definir la función flash global como un plugin de Vue
 const flashPlugin = {

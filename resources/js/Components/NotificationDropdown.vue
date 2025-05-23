@@ -213,9 +213,13 @@ const fetchNotifications = async () => {
 };
 
 // Marcar una notificación como leída
+// Marcar una notificación como leída
 const markAsRead = (notification) => {
-    useForm({}).patch(route('notifications.markAsRead', notification.id), {
+    const form = useForm({});
+
+    form.patch(route('notifications.markAsRead', notification.id), {
         preserveScroll: true,
+        preserveState: true,
         onSuccess: () => {
             // Eliminar la notificación del array local
             notifications.value = notifications.value.filter(n => n.id !== notification.id);
@@ -223,20 +227,29 @@ const markAsRead = (notification) => {
 
             // Si la notificación tiene un enlace, redirigir
             if (notification.link) {
-                window.location.href = notification.link;
+                router.visit(notification.link);
                 isOpen.value = false;
             }
+        },
+        onError: (errors) => {
+            console.error('Error al marcar como leída:', errors);
         }
     });
 };
 
 // Marcar todas las notificaciones como leídas
 const markAllAsRead = () => {
-    useForm({}).post(route('notifications.markAllAsRead'), {
+    const form = useForm({});
+
+    form.post(route('notifications.markAllAsRead'), {
         preserveScroll: true,
+        preserveState: true,
         onSuccess: () => {
             notifications.value = [];
             unreadCount.value = 0;
+        },
+        onError: (errors) => {
+            console.error('Error al marcar todas como leídas:', errors);
         }
     });
 };
