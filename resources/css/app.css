@@ -1,79 +1,58 @@
-/* Variables de color ToCoToTi */
-:root {
-    --color-primary: #00913F;
-    --color-primary-light: #40B169;
-    --color-primary-dark: #006E2F;
-    --color-secondary: #825028;
-    --color-secondary-light: #A67A4D;
-    --color-secondary-dark: #5E3A1D;
-    --color-text: #333333;
-    --color-text-light: #666666;
-    --color-bg: #FFFFFF;
-    --color-bg-alt: #EEEEEE;
-}
-
-/* Tema oscuro */
-.dark {
-    --color-primary: #40B169;
-    --color-primary-light: #5FC287;
-    --color-primary-dark: #00913F;
-    --color-secondary: #A67A4D;
-    --color-secondary-light: #C99A6E;
-    --color-secondary-dark: #825028;
-    --color-text: #F3F3F3;
-    --color-text-light: #BBBBBB;
-    --color-bg: #121212;
-    --color-bg-alt: #2A2A2A;
-}
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Estilos personalizados */
-.btn-primary {
-    @apply bg-primary hover:bg-primary-dark text-white font-medium py-2 px-4 rounded;
+@layer base {
+    :root {
+        /* Colores corporativos ToCoToTi */
+        --color-verde-corporativo: #00913F;
+        --color-tierra: #825028;
+        --color-blanco: #FFFFFF;
+        --color-gris-oscuro: #333333;
+        --color-gris-claro: #EEEEEE;
+        --color-fondo-logo: #FAF6F0; /* Color crema del fondo del logo */
+    }
+
+    * {
+        font-family: 'Open Sans', sans-serif;
+    }
+
+    body {
+        background-color: var(--color-fondo-logo);
+        color: var(--color-gris-oscuro);
+    }
+
+    /* Estilos para modo oscuro */
+    .dark {
+        --color-fondo-logo: #1a1a1a;
+    }
 }
 
-.btn-secondary {
-    @apply bg-secondary hover:bg-secondary-dark text-white font-medium py-2 px-4 rounded;
-}
+@layer components {
+    /* Botón principal verde */
+    .btn-primary {
+        @apply bg-[#00913F] hover:bg-[#007833] text-white font-semibold transition-colors duration-200;
+    }
 
-/* Estilos para formularios */
-.form-input {
-    @apply mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary-light focus:ring-opacity-50;
-}
+    /* Botón secundario tierra */
+    .btn-secondary {
+        @apply bg-[#825028] hover:bg-[#6b3f1f] text-white font-semibold transition-colors duration-200;
+    }
 
-/* Estilos para tarjetas */
-.item-card {
-    @apply bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow duration-300;
-}
+    /* Enlaces verdes */
+    .link-primary {
+        @apply text-[#00913F] hover:text-[#007833] transition-colors duration-200;
+    }
 
-/* Estilos para badges */
-.badge {
-    @apply px-2 py-1 text-xs font-semibold rounded-full;
-}
+    /* Fondo principal */
+    .bg-main {
+        @apply bg-[#FAF6F0];
+    }
 
-.badge-primary {
-    @apply bg-primary-light text-white;
-}
-
-.badge-secondary {
-    @apply bg-secondary-light text-white;
-}
-
-.badge-success {
-    @apply bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100;
-}
-
-.badge-warning {
-    @apply bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100;
-}
-
-.badge-danger {
-    @apply bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100;
-}
-
-.badge-info {
-    @apply bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100;
+    /* Texto principal */
+    .text-main {
+        @apply text-[#333333];
+    }
 }

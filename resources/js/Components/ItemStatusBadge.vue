@@ -4,9 +4,9 @@
         <span
             class="px-3 py-1 inline-flex text-sm font-medium rounded-full"
             :class="{
-                'bg-primary-light/20 text-primary-dark dark:bg-primary-dark/30 dark:text-primary-light': status === 'available',
-                'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-200': status === 'reserved',
-                'bg-secondary-light/20 text-secondary-dark dark:bg-secondary-dark/30 dark:text-secondary-light': status === 'given'
+                'bg-[#00913F]/20 text-[#00913F] font-semibold': status === 'available',
+                'bg-[#825028]/20 text-[#825028] font-semibold': status === 'reserved',
+                'bg-[#333333]/20 text-[#333333] font-semibold': status === 'given'
             }"
         >
             {{ statusText }}

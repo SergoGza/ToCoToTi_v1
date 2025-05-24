@@ -4,14 +4,14 @@
         <!-- Debugger para probar el modo oscuro -->
         <div v-if="false" class="bg-white dark:bg-black p-4 dark:text-white text-center text-xl">
             TEMA ACTUAL: {{ isDarkMode ? 'OSCURO' : 'CLARO' }}
-            <button @click="window.toggleDarkMode()" class="ml-4 bg-primary p-2 rounded text-white">
+            <button @click="window.toggleDarkMode()" class="ml-4 bg-blue-500 p-2 rounded text-white">
                 Cambiar tema manualmente
             </button>
         </div>
 
-        <div class="min-h-screen bg-gray-100 dark:bg-gray-900">
+        <div class="min-h-screen bg-[#FAF6F0] dark:bg-gray-900">
             <nav
-                class="border-b border-gray-100 bg-white dark:bg-gray-800 dark:border-gray-700"
+                class="border-b border-[#E0D5C7] bg-white dark:bg-gray-800 dark:border-gray-700"
             >
                 <!-- Primary Navigation Menu -->
                 <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -20,9 +20,7 @@
                             <!-- Logo -->
                             <div class="flex shrink-0 items-center">
                                 <Link :href="route('dashboard')">
-                                    <ApplicationLogo
-                                        class="block h-9 w-auto fill-current text-gray-800 dark:text-white"
-                                    />
+                                    <ApplicationLogo />
                                 </Link>
                             </div>
 
@@ -33,22 +31,23 @@
                                 <NavLink
                                     :href="route('dashboard')"
                                     :active="route().current('dashboard')"
+                                    class="nav-link"
                                 >
                                     Dashboard
                                 </NavLink>
-                                <NavLink :href="route('items.index')" :active="route().current('items.*')">
+                                <NavLink :href="route('items.index')" :active="route().current('items.*')" class="nav-link">
                                     Items
                                 </NavLink>
-                                <NavLink :href="route('requests.index')" :active="route().current('requests.index')">
+                                <NavLink :href="route('requests.index')" :active="route().current('requests.index')" class="nav-link">
                                     Solicitudes
                                 </NavLink>
-                                <NavLink :href="route('requests.my')" :active="route().current('requests.my')">
+                                <NavLink :href="route('requests.my')" :active="route().current('requests.my')" class="nav-link">
                                     Mis Solicitudes
                                 </NavLink>
-                                <NavLink :href="route('interests.index')" :active="route().current('interests.index')">
+                                <NavLink :href="route('interests.index')" :active="route().current('interests.index')" class="nav-link">
                                     Mis Intereses
                                 </NavLink>
-                                <NavLink :href="route('interests.received')" :active="route().current('interests.received')">
+                                <NavLink :href="route('interests.received')" :active="route().current('interests.received')" class="nav-link">
                                     Intereses Recibidos
                                 </NavLink>
 
@@ -241,7 +240,7 @@
 
             <!-- Page Heading -->
             <header
-                class="bg-white shadow dark:bg-gray-800 dark:text-white"
+                class="bg-white shadow-sm dark:bg-gray-800 dark:text-white border-b border-[#E0D5C7]"
                 v-if="$slots.header"
             >
                 <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
@@ -295,6 +294,47 @@ const props = defineProps({
     }
 });
 
+// Función auxiliar para mostrar toast
+// Podemos exponerla globalmente para usarla desde cualquier componente
+const showToast = (message, type = 'info', duration = 5000) => {
+    if (toastNotification.value) {
+        toastNotification.value.addToast(message, type, duration);
+    } else {
+        // Fallback si el componente no está disponible
+        window.dispatchEvent(
+            new CustomEvent('add-toast', {
+                detail: { message, type, duration }
+            })
+        );
+    }
+};
+
+// Función auxiliar para mostrar/ocultar loading
+const showGlobalLoading = (message = 'Cargando...') => {
+    if (loadingIndicator.value) {
+        loadingIndicator.value.showLoading(message);
+    } else {
+        window.dispatchEvent(
+            new CustomEvent('show-loading', {
+                detail: { message }
+            })
+        );
+    }
+};
+
+const hideGlobalLoading = () => {
+    if (loadingIndicator.value) {
+        loadingIndicator.value.hideLoading();
+    } else {
+        window.dispatchEvent(new CustomEvent('hide-loading'));
+    }
+};
+
+// Exponer las funciones globalmente
+window.showToast = showToast;
+window.showGlobalLoading = showGlobalLoading;
+window.hideGlobalLoading = hideGlobalLoading;
+
 onMounted(() => {
     // Detectar el modo oscuro actual
     isDarkMode.value = document.documentElement.classList.contains('dark');
@@ -304,41 +344,23 @@ onMounted(() => {
         (config) => {
             // Si la petición no tiene un header personalizado para evitar el loader
             if (!config.headers['X-No-Loading'] && !config.headers['X-Silent-Request']) {
-                if (loadingIndicator.value) {
-                    loadingIndicator.value.showLoading('Cargando...');
-                } else {
-                    window.dispatchEvent(new CustomEvent('show-loading', {
-                        detail: { message: 'Cargando...' }
-                    }));
-                }
+                showGlobalLoading('Cargando...');
             }
             return config;
         },
         (error) => {
-            if (loadingIndicator.value) {
-                loadingIndicator.value.hideLoading();
-            } else {
-                window.dispatchEvent(new CustomEvent('hide-loading'));
-            }
+            hideGlobalLoading();
             return Promise.reject(error);
         }
     );
 
     axios.interceptors.response.use(
         (response) => {
-            if (loadingIndicator.value) {
-                loadingIndicator.value.hideLoading();
-            } else {
-                window.dispatchEvent(new CustomEvent('hide-loading'));
-            }
+            hideGlobalLoading();
             return response;
         },
         (error) => {
-            if (loadingIndicator.value) {
-                loadingIndicator.value.hideLoading();
-            } else {
-                window.dispatchEvent(new CustomEvent('hide-loading'));
-            }
+            hideGlobalLoading();
             return Promise.reject(error);
         }
     );
@@ -355,22 +377,4 @@ onMounted(() => {
         }
     }
 });
-
-// Función auxiliar para mostrar toast
-// Podemos exponerla globalmente para usarla desde cualquier componente
-const showToast = (message, type = 'info', duration = 5000) => {
-    if (toastNotification.value) {
-        toastNotification.value.addToast(message, type, duration);
-    } else {
-        // Fallback si el componente no está disponible
-        window.dispatchEvent(
-            new CustomEvent('add-toast', {
-                detail: { message, type, duration }
-            })
-        );
-    }
-};
-
-// Exponer la función globalmente
-window.showToast = showToast;
 </script>

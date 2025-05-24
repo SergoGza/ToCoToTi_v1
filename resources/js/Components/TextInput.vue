@@ -23,9 +23,8 @@ defineExpose({
 
 <template>
     <input
-        ref="input"
+        class="rounded-md border-gray-300 shadow-sm focus:border-[#00913F] focus:ring-[#00913F]"
         v-model="model"
-        class="rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary-light focus:ring-opacity-50 dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:focus:border-primary-light"
-        v-bind="$attrs"
+        ref="input"
     />
 </template>
