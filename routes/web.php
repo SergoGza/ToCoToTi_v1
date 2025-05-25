@@ -8,7 +8,9 @@ use App\Http\Controllers\ItemInterestController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\MessageController;
+use App\Http\Controllers\WelcomeTourController; // Nueva importación
 use App\Models\Item;
+use App\Models\ItemInterest;
 use App\Models\Request as ItemRequest; // Usamos un alias para evitar conflicto con la clase Request de HTTP
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Auth;
@@ -26,17 +28,64 @@ Route::get('/', function () {
 });
 
 Route::get('/dashboard', function () {
+    $user = Auth::user();
+
+    // Estadísticas del usuario
+    $stats = [
+        'itemsPublished' => Item::where('user_id', $user->id)->count(),
+        'itemsGiven' => Item::where('user_id', $user->id)->where('status', 'given')->count(),
+        'requestsActive' => ItemRequest::where('user_id', $user->id)->where('status', 'active')->count(),
+        'interestsReceived' => ItemInterest::whereHas('item', function($query) use ($user) {
+            $query->where('user_id', $user->id);
+        })->count(),
+    ];
+
+    // Items del usuario
+    $userItems = Item::where('user_id', $user->id)
+        ->with('category')
+        ->latest()
+        ->take(10)
+        ->get();
+
+    // Items recientes de la comunidad (no del usuario actual)
+    $recentItems = Item::with('user', 'category')
+        ->where('status', 'available')
+        ->where('user_id', '!=', $user->id)
+        ->latest()
+        ->take(6)
+        ->get();
+
+    // Solicitudes recientes de la comunidad
+    $recentRequests = ItemRequest::with('user', 'category')
+        ->where('status', 'active')
+        ->where('user_id', '!=', $user->id)
+        ->latest()
+        ->take(6)
+        ->get();
+
+    // Items recomendados (basados en las categorías de interés del usuario)
+    $userCategories = ItemInterest::where('item_interests.user_id', $user->id)
+        ->join('items', 'item_interests.item_id', '=', 'items.id')
+        ->pluck('items.category_id')
+        ->unique();
+
+    $matchingItems = Item::with('user', 'category')
+        ->where('status', 'available')
+        ->where('user_id', '!=', $user->id)
+        ->when($userCategories->isNotEmpty(), function($query) use ($userCategories) {
+            $query->whereIn('category_id', $userCategories);
+        })
+        ->inRandomOrder()
+        ->take(4)
+        ->get();
+
     return Inertia::render('Dashboard', [
-        'recentItems' => Item::with('user')
-            ->where('status', 'available')
-            ->latest()
-            ->take(5)
-            ->get(),
-        'recentRequests' => ItemRequest::with('user')
-            ->where('status', 'active')
-            ->latest()
-            ->take(5)
-            ->get()
+        'stats' => $stats,
+        'userItems' => $userItems,
+        'recentItems' => $recentItems,
+        'recentRequests' => $recentRequests,
+        'matchingItems' => $matchingItems,
+        'showWelcomeTour' => !$user->hasCompletedWelcomeTour(), // Nuevo: pasar si mostrar el tour
     ]);
 })->middleware(['auth', 'verified'])->name('dashboard');
 
@@ -97,6 +146,10 @@ Route::middleware('auth')->group(function () {
         $count = $user ? $user->unreadMessagesCount() : 0;
         return response()->json(['count' => $count]);
     })->name('api.unreadMessages');
+
+    // Nuevas rutas para el tour de bienvenida
+    Route::post('/welcome-tour/complete', [WelcomeTourController::class, 'complete'])->name('welcome-tour.complete');
+    Route::get('/api/welcome-tour/status', [WelcomeTourController::class, 'status'])->name('api.welcome-tour.status');
 });
 
 require __DIR__.'/auth.php';

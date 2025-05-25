@@ -1,227 +1,241 @@
 <script setup>
-import { ref } from 'vue';
-import ApplicationLogo from '@/Components/ApplicationLogo.vue';
-import Dropdown from '@/Components/Dropdown.vue';
-import DropdownLink from '@/Components/DropdownLink.vue';
-import NavLink from '@/Components/NavLink.vue';
-import ResponsiveNavLink from '@/Components/ResponsiveNavLink.vue';
-import { Link } from '@inertiajs/vue3';
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import WelcomeTour from '@/Components/WelcomeTour.vue';
+import { Head, Link } from '@inertiajs/vue3';
+import { ref, computed, onMounted } from 'vue';
 
-const showingNavigationDropdown = ref(false);
+// Props con datos del backend
+const props = defineProps({
+    stats: {
+        type: Object,
+        default: () => ({
+            itemsPublished: 0,
+            itemsGiven: 0,
+            requestsActive: 0,
+            interestsReceived: 0
+        })
+    },
+    recentItems: {
+        type: Array,
+        default: () => []
+    },
+    recentRequests: {
+        type: Array,
+        default: () => []
+    },
+    userItems: {
+        type: Array,
+        default: () => []
+    },
+    matchingItems: {
+        type: Array,
+        default: () => []
+    },
+    showWelcomeTour: {
+        type: Boolean,
+        default: false
+    }
+});
+
+// Estado local
+const activeTab = ref('overview');
+const showTour = ref(props.showWelcomeTour);
+
+// Handlers para el tour
+const handleTourComplete = async () => {
+    try {
+        // Enviar petición al backend para marcar como completado
+        await fetch(route('welcome-tour.complete'), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.head.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+            }
+        });
+
+        showTour.value = false;
+
+        // Opcional: mostrar algún mensaje de confirmación
+        console.log('¡Tour completado! ¡Bienvenido a ToCoToTi!');
+    } catch (error) {
+        console.error('Error al completar el tour:', error);
+        // Aún así ocultar el tour para no bloquear al usuario
+        showTour.value = false;
+    }
+};
+
+const handleTourSkip = async () => {
+    try {
+        // También marcar como completado cuando se salta
+        await fetch(route('welcome-tour.complete'), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.head.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+            }
+        });
+
+        showTour.value = false;
+    } catch (error) {
+        console.error('Error al saltar el tour:', error);
+        showTour.value = false;
+    }
+};
 </script>
 
 <template>
-    <div>
-        <div class="min-h-screen bg-gray-100">
-            <nav class="border-b border-gray-100 bg-white">
-                <!-- Primary Navigation Menu -->
-                <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <div class="flex h-16 justify-between">
-                        <div class="flex">
-                            <!-- Logo -->
-                            <div class="flex shrink-0 items-center">
-                                <Link :href="route('dashboard')">
-                                    <ApplicationLogo
-                                        class="block h-9 w-auto fill-current text-gray-800"
-                                    />
-                                </Link>
-                            </div>
+    <Head title="Dashboard" />
 
-                            <!-- Navigation Links -->
-                            <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                                <NavLink :href="route('dashboard')" :active="route().current('dashboard')">
-                                    Dashboard
-                                </NavLink>
-                                <NavLink :href="route('items.index')" :active="route().current('items.*')">
-                                    Items
-                                </NavLink>
-                                <NavLink :href="route('requests.index')" :active="route().current('requests.index')">
-                                    Solicitudes
-                                </NavLink>
-                                <NavLink :href="route('requests.my')" :active="route().current('requests.my')">
-                                    Mis Solicitudes
-                                </NavLink>
-                                <NavLink :href="route('interests.index')" :active="route().current('interests.*')">
-                                    Mis Intereses
-                                </NavLink>
-                            </div>
-                        </div>
-
-                        <div class="hidden sm:ms-6 sm:flex sm:items-center">
-                            <!-- Settings Dropdown -->
-                            <div class="relative ms-3">
-                                <Dropdown align="right" width="48">
-                                    <template #trigger>
-                                        <span class="inline-flex rounded-md">
-                                            <button
-                                                type="button"
-                                                class="inline-flex items-center rounded-md border border-transparent bg-white px-3 py-2 text-sm font-medium leading-4 text-gray-500 transition duration-150 ease-in-out hover:text-gray-700 focus:outline-none"
-                                            >
-                                                {{ $page.props.auth.user.name }}
-
-                                                <svg
-                                                    class="-me-0.5 ms-2 h-4 w-4"
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                    viewBox="0 0 20 20"
-                                                    fill="currentColor"
-                                                >
-                                                    <path
-                                                        fill-rule="evenodd"
-                                                        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                                                        clip-rule="evenodd"
-                                                    />
-                                                </svg>
-                                            </button>
-                                        </span>
-                                    </template>
-
-                                    <template #content>
-                                        <DropdownLink
-                                            :href="route('profile.edit')"
-                                        >
-                                            Profile
-                                        </DropdownLink>
-                                        <DropdownLink
-                                            :href="route('logout')"
-                                            method="post"
-                                            as="button"
-                                        >
-                                            Log Out
-                                        </DropdownLink>
-                                    </template>
-                                </Dropdown>
-                            </div>
-                        </div>
-
-                        <!-- Hamburger -->
-                        <div class="-me-2 flex items-center sm:hidden">
-                            <button
-                                @click="
-                                    showingNavigationDropdown =
-                                        !showingNavigationDropdown
-                                "
-                                class="inline-flex items-center justify-center rounded-md p-2 text-gray-400 transition duration-150 ease-in-out hover:bg-gray-100 hover:text-gray-500 focus:bg-gray-100 focus:text-gray-500 focus:outline-none"
-                            >
-                                <svg
-                                    class="h-6 w-6"
-                                    stroke="currentColor"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        :class="{
-                                            hidden: showingNavigationDropdown,
-                                            'inline-flex':
-                                                !showingNavigationDropdown,
-                                        }"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M4 6h16M4 12h16M4 18h16"
-                                    />
-                                    <path
-                                        :class="{
-                                            hidden: !showingNavigationDropdown,
-                                            'inline-flex':
-                                                showingNavigationDropdown,
-                                        }"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M6 18L18 6M6 6l12 12"
-                                    />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
+    <AuthenticatedLayout>
+        <template #header>
+            <div class="flex justify-between items-center">
+                <div>
+                    <h2 class="font-semibold text-xl text-[#333333] leading-tight">
+                        ¡Hola, {{ $page.props.auth.user.name }}! 👋
+                    </h2>
+                    <p class="text-[#825028] text-sm mt-1">Bienvenido a tu espacio de intercambio</p>
                 </div>
-
-                <!-- Responsive Navigation Menu -->
-                <div
-                    :class="{
-                        block: showingNavigationDropdown,
-                        hidden: !showingNavigationDropdown,
-                    }"
-                    class="sm:hidden"
-                >
-                    <div class="space-y-1 pb-3 pt-2">
-                        <ResponsiveNavLink
-                            :href="route('dashboard')"
-                            :active="route().current('dashboard')"
-                        >
-                            Dashboard
-                        </ResponsiveNavLink>
-                        <ResponsiveNavLink
-                            :href="route('items.index')"
-                            :active="route().current('items.*')"
-                        >
-                            Items
-                        </ResponsiveNavLink>
-                        <ResponsiveNavLink
-                            :href="route('requests.index')"
-                            :active="route().current('requests.index')"
-                        >
-                            Solicitudes
-                        </ResponsiveNavLink>
-                        <ResponsiveNavLink
-                            :href="route('requests.my')"
-                            :active="route().current('requests.my')"
-                        >
-                            Mis Solicitudes
-                        </ResponsiveNavLink>
-                        <ResponsiveNavLink
-                            :href="route('interests.index')"
-                            :active="route().current('interests.*')"
-                        >
-                            Mis Intereses
-                        </ResponsiveNavLink>
-                    </div>
-
-                    <!-- Responsive Settings Options -->
-                    <div
-                        class="border-t border-gray-200 pb-1 pt-4"
+                <div class="flex space-x-3">
+                    <Link
+                        :href="route('items.create')"
+                        class="inline-flex items-center px-4 py-2 bg-[#00913F] text-white rounded-lg hover:bg-[#007833] transition-colors duration-200"
                     >
-                        <div class="px-4">
-                            <div
-                                class="text-base font-medium text-gray-800"
-                            >
-                                {{ $page.props.auth.user.name }}
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Publicar ítem
+                    </Link>
+                    <Link
+                        :href="route('requests.create')"
+                        class="inline-flex items-center px-4 py-2 bg-[#825028] text-white rounded-lg hover:bg-[#6b3f1f] transition-colors duration-200"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                        Crear solicitud
+                    </Link>
+                </div>
+            </div>
+        </template>
+
+        <div class="py-8">
+            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+                <!-- Estadísticas principales -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                    <!-- Items publicados -->
+                    <div class="bg-white rounded-lg shadow-sm p-6 border border-[#E0D5C7]">
+                        <div class="flex items-center">
+                            <div class="p-3 bg-[#00913F]/10 rounded-lg">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-[#00913F]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                </svg>
                             </div>
-                            <div class="text-sm font-medium text-gray-500">
-                                {{ $page.props.auth.user.email }}
+                            <div class="ml-4">
+                                <p class="text-sm text-[#825028]">Items publicados</p>
+                                <p class="text-2xl font-semibold text-[#333333]">{{ props.stats.itemsPublished }}</p>
                             </div>
                         </div>
+                    </div>
 
-                        <div class="mt-3 space-y-1">
-                            <ResponsiveNavLink :href="route('profile.edit')">
-                                Profile
-                            </ResponsiveNavLink>
-                            <ResponsiveNavLink
-                                :href="route('logout')"
-                                method="post"
-                                as="button"
-                            >
-                                Log Out
-                            </ResponsiveNavLink>
+                    <!-- Items entregados -->
+                    <div class="bg-white rounded-lg shadow-sm p-6 border border-[#E0D5C7]">
+                        <div class="flex items-center">
+                            <div class="p-3 bg-[#825028]/10 rounded-lg">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-[#825028]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+                                </svg>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm text-[#825028]">Items entregados</p>
+                                <p class="text-2xl font-semibold text-[#333333]">{{ props.stats.itemsGiven }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Solicitudes activas -->
+                    <div class="bg-white rounded-lg shadow-sm p-6 border border-[#E0D5C7]">
+                        <div class="flex items-center">
+                            <div class="p-3 bg-[#00913F]/10 rounded-lg">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-[#00913F]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                </svg>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm text-[#825028]">Solicitudes activas</p>
+                                <p class="text-2xl font-semibold text-[#333333]">{{ props.stats.requestsActive }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Intereses recibidos -->
+                    <div class="bg-white rounded-lg shadow-sm p-6 border border-[#E0D5C7]">
+                        <div class="flex items-center">
+                            <div class="p-3 bg-[#825028]/10 rounded-lg">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-[#825028]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                </svg>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm text-[#825028]">Intereses recibidos</p>
+                                <p class="text-2xl font-semibold text-[#333333]">{{ props.stats.interestsReceived }}</p>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </nav>
 
-            <!-- Page Heading -->
-            <header
-                class="bg-white shadow"
-                v-if="$slots.header"
-            >
-                <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-                    <slot name="header" />
-                </div>
-            </header>
+                <!-- Tabs de contenido -->
+                <div class="bg-white rounded-lg shadow-sm border border-[#E0D5C7]">
+                    <div class="border-b border-[#E0D5C7]">
+                        <nav class="flex space-x-8 px-6" aria-label="Tabs">
+                            <button
+                                @click="activeTab = 'overview'"
+                                :class="[
+                                    activeTab === 'overview'
+                                        ? 'border-[#00913F] text-[#00913F]'
+                                        : 'border-transparent text-[#825028] hover:text-[#333333] hover:border-[#825028]/30',
+                                    'py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200'
+                                ]"
+                            >
+                                Vista general
+                            </button>
+                            <button
+                                @click="activeTab = 'my-items'"
+                                :class="[
+                                    activeTab === 'my-items'
+                                        ? 'border-[#00913F] text-[#00913F]'
+                                        : 'border-transparent text-[#825028] hover:text-[#333333] hover:border-[#825028]/30',
+                                    'py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200'
+                                ]"
+                            >
+                                Mis items
+                            </button>
+                            <button
+                                @click="activeTab = 'recommendations'"
+                                :class="[
+                                    activeTab === 'recommendations'
+                                        ? 'border-[#00913F] text-[#00913F]'
+                                        : 'border-transparent text-[#825028] hover:text-[#333333] hover:border-[#825028]/30',
+                                    'py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200'
+                                ]"
+                            >
+                                Recomendaciones
+                            </button>
+                        </nav>
+                    </div>
 
-            <!-- Page Content -->
-            <main>
-                <slot />
-            </main>
-        </div>
-    </div>
-</template>
+                    <div class="p-6">
+                        <!-- Vista general -->
+                        <div v-if="activeTab === 'overview'" class="space-y-6">
+                            <!-- Items recientes en la comunidad -->
+                            <div>
+                                <h3 class="text-lg font-semibold text-[#333333] mb-4">Items recientes en la comunidad</h3>
+                                <div v-if="recentItems.length > 0" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <Link
+                                        v-for="item in recentItems.slice(0, 3)"
+                                        :key="item.id"
+                                        :href="route('items.show', item.id)"
+                                        class="border border-[#E0D5C7] rounded-lg p-4 hover:shadow-md transition-shadow duration-200"
+                                    >
+                                        <div class="aspect-w-16 aspect-h-9 mb-3">
+                                            <div v-if="item.images && item.images.length > 0" class="h-32 bg-gray-200 rounded">
+                                                <img :src="`/storage/${item.images[0]}`" :alt="item.title" class="w-full h-full

@@ -21,6 +21,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'welcome_tour_completed',
     ];
 
     /**
@@ -43,6 +44,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'welcome_tour_completed' => 'boolean',
         ];
     }
 
@@ -120,5 +122,21 @@ class User extends Authenticatable
             $query->where('user1_id', $userId)
                 ->where('user2_id', $this->id);
         })->first();
+    }
+
+    /**
+     * Marcar el tour de bienvenida como completado
+     */
+    public function markWelcomeTourCompleted()
+    {
+        $this->update(['welcome_tour_completed' => true]);
+    }
+
+    /**
+     * Verificar si el usuario ha completado el tour de bienvenida
+     */
+    public function hasCompletedWelcomeTour()
+    {
+        return $this->welcome_tour_completed;
     }
 }
