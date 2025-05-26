@@ -117,14 +117,37 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-
-
-// Función para actualizar el token CSRF
+// Función mejorada para actualizar el token CSRF
 const updateCsrfToken = () => {
     const token = document.head.querySelector('meta[name="csrf-token"]');
     if (token) {
         window.axios.defaults.headers.common['X-CSRF-TOKEN'] = token.content;
+        window.csrfToken = token.content;
+
+        // Debug: confirmar que el token está configurado
+        console.log('Token CSRF actualizado:', token.content.substring(0, 10) + '...');
+        return true;
+    } else {
+        console.error('Meta tag csrf-token no encontrada');
+        return false;
     }
+};
+
+// Función global para obtener el token CSRF actual
+window.getCsrfToken = () => {
+    const token = document.head.querySelector('meta[name="csrf-token"]');
+    return token ? token.content : null;
+};
+
+// Función global para verificar si el token CSRF está disponible
+window.verifyCsrfToken = () => {
+    const token = window.getCsrfToken();
+    const hasToken = !!token;
+    console.log('Verificación CSRF:', hasToken ? 'OK' : 'FALTA');
+    if (hasToken) {
+        console.log('Token:', token.substring(0, 10) + '...');
+    }
+    return hasToken;
 };
 
 // Ejecutar la configuración del modo oscuro
@@ -132,7 +155,23 @@ setupDarkMode();
 setupToastNotifications();
 
 // Asegurarse de que el token CSRF esté actualizado
-document.addEventListener('DOMContentLoaded', updateCsrfToken);
+document.addEventListener('DOMContentLoaded', () => {
+    updateCsrfToken();
+
+    // Verificar que el token esté disponible después de un breve delay
+    setTimeout(() => {
+        if (!window.verifyCsrfToken()) {
+            console.warn('Token CSRF no disponible después del DOM ready');
+        }
+    }, 100);
+});
+
+// También actualizar cuando la página se vuelve visible (útil para pestañas que estuvieron en background)
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+        updateCsrfToken();
+    }
+});
 
 // Definir la función flash global como un plugin de Vue
 const flashPlugin = {
@@ -179,6 +218,11 @@ createInertiaApp({
                 console.error('Error al procesar mensajes flash:', error);
             }
         }, 0);
+
+        // Verificar token CSRF después de montar
+        setTimeout(() => {
+            window.verifyCsrfToken();
+        }, 500);
     },
     progress: {
         color: '#4B5563',

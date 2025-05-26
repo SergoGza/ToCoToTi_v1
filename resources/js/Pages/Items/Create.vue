@@ -93,7 +93,7 @@
                                     id="images"
                                     type="file"
                                     class="mt-1 block w-full"
-                                    @input="form.images = $event.target.files"
+                                    @input="handleFileInput"
                                     multiple
                                     accept="image/*"
                                 />
@@ -147,16 +147,75 @@ const form = useForm({
     images: null,
 });
 
+// Manejar la selección de archivos
+const handleFileInput = (event) => {
+    const files = event.target.files;
+    form.images = files && files.length > 0 ? files : null;
+};
+
 // Envío del formulario
 const submit = () => {
+    // Verificar token CSRF usando las funciones globales
+    if (!window.verifyCsrfToken()) {
+        console.error('Token CSRF no disponible');
+        if (window.showErrorToast) {
+            window.showErrorToast('Error de seguridad. Por favor, recarga la página.');
+        }
+        return;
+    }
+
+    const csrfToken = window.getCsrfToken();
+    console.log('Enviando formulario con token CSRF...');
+
     form.post(route('items.store'), {
-        // Para enviar archivos
+        // Para enviar archivos necesitamos forceFormData
         forceFormData: true,
-        // Conserva los archivos adjuntos en el formulario después del envío
+        // Conserva el scroll en caso de errores
         preserveScroll: true,
-        onSuccess: () => {
+        // Preservar el estado para mantener los datos en caso de error
+        preserveState: true,
+        // Callback de éxito
+        onSuccess: (page) => {
+            console.log('Item creado exitosamente');
+            // Limpiar el formulario tras el éxito
             form.reset();
+            // Limpiar también el input de archivos
+            const fileInput = document.getElementById('images');
+            if (fileInput) {
+                fileInput.value = '';
+            }
+
+            if (window.showSuccessToast) {
+                window.showSuccessToast('Item publicado correctamente');
+            }
         },
+        // Callback de error
+        onError: (errors) => {
+            console.error('Errores de validación:', errors);
+
+            // Mostrar errores específicos de validación
+            const errorMessages = [];
+            Object.keys(errors).forEach(field => {
+                if (Array.isArray(errors[field])) {
+                    errorMessages.push(...errors[field]);
+                } else {
+                    errorMessages.push(errors[field]);
+                }
+            });
+
+            if (errorMessages.length > 0 && window.showErrorToast) {
+                window.showErrorToast(errorMessages[0]); // Mostrar el primer error
+            }
+        },
+        // Callback que se ejecuta antes del envío
+        onBefore: () => {
+            console.log('Preparando envío del formulario...');
+            return true; // Continuar con el envío
+        },
+        // Callback que se ejecuta al terminar (éxito o error)
+        onFinish: () => {
+            console.log('Procesamiento del formulario terminado');
+        }
     });
 };
 </script>
