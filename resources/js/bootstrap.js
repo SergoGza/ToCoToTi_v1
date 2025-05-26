@@ -36,7 +36,6 @@ axios.interceptors.response.use(
                 window.showErrorToast('Error de seguridad. Recargando página...');
             }
 
-            // Recargar después de un breve delay
             setTimeout(() => {
                 window.location.reload();
             }, 1500);

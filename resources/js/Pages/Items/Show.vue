@@ -302,7 +302,6 @@ const deleteItem = () => {
 
 // Manejar el cambio de estado del item
 const onStatusChanged = (newStatus) => {
-    // Recargar la página para mostrar el nuevo estado
     window.location.reload();
 };
 </script>

@@ -61,7 +61,7 @@ Route::get('/dashboard', function () {
         ->take(6)
         ->get();
 
-    // Items recomendados (basados en las categorías de interés del usuario)
+    // Items recomendados
     $userCategories = ItemInterest::where('item_interests.user_id', $user->id)
         ->join('items', 'item_interests.item_id', '=', 'items.id')
         ->pluck('items.category_id')
