@@ -16,17 +16,11 @@ class RequestController extends Controller
 {
     protected $matchingService;
 
-    /**
-     * Constructor con inyección del servicio de coincidencias.
-     */
     public function __construct(MatchingService $matchingService = null)
     {
         $this->matchingService = $matchingService ?: new MatchingService();
     }
 
-    /**
-     * Display a listing of the resource.
-     */
     public function index(Request $request)
     {
         $query = ItemRequest::with(['user', 'category'])
@@ -80,9 +74,6 @@ class RequestController extends Controller
         ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
         $categories = Category::all();
@@ -92,9 +83,6 @@ class RequestController extends Controller
         ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
         $request->validate([
@@ -128,9 +116,6 @@ class RequestController extends Controller
         return redirect()->route('requests.index')->with('success', 'Solicitud creada correctamente');
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(ItemRequest $request)
     {
         // Cargamos las relaciones necesarias
@@ -146,9 +131,6 @@ class RequestController extends Controller
         ]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(ItemRequest $request)
     {
         // Verificar que el usuario actual es el propietario
@@ -164,9 +146,6 @@ class RequestController extends Controller
         ]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $httpRequest, ItemRequest $request)
     {
         // Verificar que el usuario actual es el propietario
@@ -213,9 +192,6 @@ class RequestController extends Controller
         return redirect()->route('requests.show', $request->id)->with('success', 'Solicitud actualizada correctamente');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(ItemRequest $request)
     {
         // Verificar que el usuario actual es el propietario
@@ -228,9 +204,6 @@ class RequestController extends Controller
         return redirect()->route('requests.index')->with('success', 'Solicitud eliminada correctamente');
     }
 
-    /**
-     * Listar las solicitudes del usuario autenticado.
-     */
     public function myRequests()
     {
         $requests = ItemRequest::where('user_id', Auth::id())

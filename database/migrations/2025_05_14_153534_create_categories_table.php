@@ -9,11 +9,10 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-// Archivo: database/migrations/2025_05_14_153534_create_categories_table.php
     public function up()
     {
         Schema::create('categories', function (Blueprint $table) {
-            $table->id(); // Esto crea una columna de tipo BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY
+            $table->id();
             $table->string('name');
             $table->string('description')->nullable();
             $table->string('icon')->nullable();

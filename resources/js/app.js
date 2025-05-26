@@ -12,7 +12,6 @@ import Pusher from 'pusher-js';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
-// Función para manejar el tema oscuro
 const setupDarkMode = () => {
     // Verificar el tema guardado o preferencia del sistema
     const isDarkMode = localStorage.getItem('theme') === 'dark' ||
@@ -50,7 +49,6 @@ const setupDarkMode = () => {
 
 // Sistema global de notificaciones toast
 const setupToastNotifications = () => {
-    // Función global para mostrar toast
     window.showToast = (message, type = 'info', duration = 5000) => {
         try {
             // Crear y disparar un evento personalizado
@@ -59,7 +57,6 @@ const setupToastNotifications = () => {
             });
             window.dispatchEvent(event);
 
-            // También registramos en la consola para depuración
             console.log(`Toast (${type}): ${message}`);
         } catch (error) {
             console.error('Error al mostrar toast:', error);
@@ -117,7 +114,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// Función mejorada para actualizar el token CSRF
 const updateCsrfToken = () => {
     const token = document.head.querySelector('meta[name="csrf-token"]');
     if (token) {
@@ -133,13 +129,11 @@ const updateCsrfToken = () => {
     }
 };
 
-// Función global para obtener el token CSRF actual
 window.getCsrfToken = () => {
     const token = document.head.querySelector('meta[name="csrf-token"]');
     return token ? token.content : null;
 };
 
-// Función global para verificar si el token CSRF está disponible
 window.verifyCsrfToken = () => {
     const token = window.getCsrfToken();
     const hasToken = !!token;
@@ -158,7 +152,6 @@ setupToastNotifications();
 document.addEventListener('DOMContentLoaded', () => {
     updateCsrfToken();
 
-    // Verificar que el token esté disponible después de un breve delay
     setTimeout(() => {
         if (!window.verifyCsrfToken()) {
             console.warn('Token CSRF no disponible después del DOM ready');
@@ -166,7 +159,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 100);
 });
 
-// También actualizar cuando la página se vuelve visible (útil para pestañas que estuvieron en background)
 document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
         updateCsrfToken();
@@ -202,7 +194,7 @@ createInertiaApp({
         // Montar la aplicación
         app.mount(el);
 
-        // IMPORTANTE: Solo procesar mensajes flash después de que la aplicación esté montada
+        // Solo procesar mensajes flash después de que la aplicación esté montada
         setTimeout(() => {
             try {
                 const page = usePage();
@@ -219,7 +211,6 @@ createInertiaApp({
             }
         }, 0);
 
-        // Verificar token CSRF después de montar
         setTimeout(() => {
             window.verifyCsrfToken();
         }, 500);

@@ -29,7 +29,6 @@ const displayMessage = computed(() => {
     return customMessage.value || props.message || 'Cargando...';
 });
 
-// Función para mostrar el indicador de carga
 const showLoading = (message = '') => {
     loading.value = true;
     if (message) {
@@ -37,7 +36,6 @@ const showLoading = (message = '') => {
     }
 };
 
-// Función para ocultar el indicador de carga
 const hideLoading = () => {
     loading.value = false;
     customMessage.value = '';

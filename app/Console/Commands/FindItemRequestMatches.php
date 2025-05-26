@@ -35,7 +35,6 @@ class FindItemRequestMatches extends Command
         // Procesar solicitudes activas para buscar ítems que coincidan
         $this->processActiveRequests($matchingService);
 
-        // También podríamos procesar nuevos ítems para buscar solicitudes coincidentes
         $this->processNewItems($matchingService);
 
         $this->info('Proceso de búsqueda de coincidencias completado');

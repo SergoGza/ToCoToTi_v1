@@ -19,7 +19,6 @@ import axios from 'axios';
 const unreadCount = ref(0);
 let polling = null;
 
-// Función para obtener el número de mensajes no leídos
 const getUnreadCount = async () => {
     try {
         const response = await axios.get(route('api.unreadMessages'), {

@@ -14,9 +14,6 @@ use App\Services\MatchingService;
 
 class ItemController extends Controller
 {
-    /**
-     * Display a listing of the resource with search and filtering.
-     */
     public function index(Request $request)
     {
         $query = Item::with(['user', 'category'])
@@ -84,9 +81,6 @@ class ItemController extends Controller
         ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
         $categories = Category::all();
@@ -105,9 +99,6 @@ class ItemController extends Controller
         ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
         $request->validate([
@@ -144,9 +135,6 @@ class ItemController extends Controller
         return redirect()->route('items.index')->with('success', 'Item creado correctamente');
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(Item $item, MatchingService $matchingService)
     {
         // Cargamos las relaciones necesarias
@@ -169,9 +157,6 @@ class ItemController extends Controller
         ]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(Item $item)
     {
         // Verificar que el usuario actual es el propietario
@@ -195,9 +180,6 @@ class ItemController extends Controller
         ]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, Item $item)
     {
         // Verificar que el usuario actual es el propietario
@@ -254,9 +236,6 @@ class ItemController extends Controller
         return redirect()->route('items.show', $item->id)->with('success', 'Item actualizado correctamente');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Item $item)
     {
         // Verificar que el usuario actual es el propietario
@@ -276,9 +255,6 @@ class ItemController extends Controller
         return redirect()->route('items.index')->with('success', 'Item eliminado correctamente');
     }
 
-    /**
-     * Update the status of the specified item.
-     */
     public function updateStatus(Request $request, Item $item)
     {
         // Verificar que el usuario actual es el propietario
@@ -349,9 +325,6 @@ class ItemController extends Controller
         return redirect()->back()->with('success', "Estado del item actualizado a '{$this->getStatusText($request->status)}'");
     }
 
-    /**
-     * Get human-readable status text.
-     */
     private function getStatusText($status)
     {
         $statusMap = [

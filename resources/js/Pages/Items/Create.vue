@@ -179,7 +179,6 @@ const submit = () => {
             console.log('Item creado exitosamente');
             // Limpiar el formulario tras el éxito
             form.reset();
-            // Limpiar también el input de archivos
             const fileInput = document.getElementById('images');
             if (fileInput) {
                 fileInput.value = '';

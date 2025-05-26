@@ -12,9 +12,6 @@ use App\Services\NotificationService;
 
 class ItemInterestController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index(Request $request)
     {
         $query = ItemInterest::with(['item.user', 'item.category'])
@@ -59,9 +56,6 @@ class ItemInterestController extends Controller
         ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
         $request->validate([
@@ -98,9 +92,6 @@ class ItemInterestController extends Controller
         return redirect()->back()->with('success', 'Has mostrado interés en este item. El propietario será notificado.');
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, ItemInterest $interest)
     {
         // Verificar que el usuario es el propietario del item
@@ -134,9 +125,6 @@ class ItemInterestController extends Controller
         return redirect()->back()->with('success', 'Estado de interés actualizado correctamente.');
     }
 
-    /**
-     * Display a listing of received interests.
-     */
     public function receivedInterests(Request $request)
     {
         // Obtener todos los ítems del usuario actual

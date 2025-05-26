@@ -183,7 +183,6 @@ const props = defineProps({
 // Copiar los filtros a un ref para poder modificarlos
 const filters = ref({...props.filters});
 
-// Método para aplicar filtros
 const applyFilters = () => {
     router.get(route('interests.received'), filters.value, {
         preserveState: true,
@@ -192,7 +191,6 @@ const applyFilters = () => {
     });
 };
 
-// Método para actualizar estado del interés
 const updateInterestStatus = (interestId, status) => {
     useForm({ status }).patch(route('interests.update', interestId), {
         preserveScroll: true,

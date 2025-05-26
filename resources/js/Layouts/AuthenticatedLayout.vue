@@ -294,13 +294,10 @@ const props = defineProps({
     }
 });
 
-// Función auxiliar para mostrar toast
-// Podemos exponerla globalmente para usarla desde cualquier componente
 const showToast = (message, type = 'info', duration = 5000) => {
     if (toastNotification.value) {
         toastNotification.value.addToast(message, type, duration);
     } else {
-        // Fallback si el componente no está disponible
         window.dispatchEvent(
             new CustomEvent('add-toast', {
                 detail: { message, type, duration }
@@ -309,7 +306,6 @@ const showToast = (message, type = 'info', duration = 5000) => {
     }
 };
 
-// Función auxiliar para mostrar/ocultar loading
 const showGlobalLoading = (message = 'Cargando...') => {
     if (loadingIndicator.value) {
         loadingIndicator.value.showLoading(message);

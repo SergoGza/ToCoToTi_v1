@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class WelcomeTourController extends Controller
 {
@@ -12,21 +13,35 @@ class WelcomeTourController extends Controller
      */
     public function complete(Request $request)
     {
-        $user = Auth::user();
+        try {
+            $user = Auth::user();
 
-        if ($user) {
+            if (!$user) {
+                Log::warning('WelcomeTour: Usuario no autenticado');
+                return back()->with('error', 'Usuario no autenticado');
+            }
+
+            Log::info('WelcomeTour: Completando tour para usuario', ['user_id' => $user->id]);
+
+            // Marcar como completado
             $user->markWelcomeTourCompleted();
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Tour de bienvenida completado'
+            Log::info('WelcomeTour: Tour completado exitosamente', [
+                'user_id' => $user->id,
+                'welcome_tour_completed' => $user->fresh()->welcome_tour_completed
             ]);
-        }
 
-        return response()->json([
-            'success' => false,
-            'message' => 'Usuario no autenticado'
-        ], 401);
+            // Para peticiones Inertia, devolver redirección con mensaje de éxito
+            return back()->with('success', 'Tour de bienvenida completado');
+
+        } catch (\Exception $e) {
+            Log::error('WelcomeTour: Error al completar tour', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return back()->with('error', 'Error al completar el tour');
+        }
     }
 
     /**

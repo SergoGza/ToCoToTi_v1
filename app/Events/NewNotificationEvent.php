@@ -52,12 +52,4 @@ class NewNotificationEvent implements ShouldBroadcast
         ];
     }
 
-    // Método para manejar errores de broadcasting
-    public function broadcastException(\Throwable $exception)
-    {
-        Log::channel('broadcasting')->error('Broadcasting error en notificación', [
-            'message' => $exception->getMessage(),
-            'trace' => $exception->getTraceAsString()
-        ]);
-    }
 }

@@ -216,7 +216,6 @@ const filters = ref({
     sort_order: props.filters?.sort_order || 'desc'
 });
 
-// Método para realizar la búsqueda
 const search = () => {
     router.get(route('items.index'), filters.value, {
         preserveState: true,
@@ -225,7 +224,6 @@ const search = () => {
     });
 };
 
-// Método para reiniciar filtros
 const resetFilters = () => {
     filters.value = {
         search: '',

@@ -13,13 +13,13 @@ return new class extends Migration
     {
         Schema::create('conversations', function (Blueprint $table) {
             $table->id();
-            $table->string('title')->nullable(); // Título opcional para la conversación
+            $table->string('title')->nullable();
             $table->foreignId('user1_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('user2_id')->constrained('users')->onDelete('cascade');
             $table->timestamp('last_message_at')->nullable();
             $table->timestamps();
 
-            // Garantizar que no haya duplicados de conversaciones entre los mismos usuarios
+
             $table->unique(['user1_id', 'user2_id']);
         });
     }

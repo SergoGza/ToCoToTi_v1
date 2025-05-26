@@ -3,12 +3,10 @@ window.axios = axios;
 
 window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
-// Función para obtener y configurar el token CSRF
 const setupCsrfToken = () => {
     const token = document.head.querySelector('meta[name="csrf-token"]');
     if (token) {
         window.axios.defaults.headers.common['X-CSRF-TOKEN'] = token.content;
-        // También exponerlo globalmente para Inertia
         window.csrfToken = token.content;
         return token.content;
     } else {
@@ -23,7 +21,6 @@ setupCsrfToken();
 // Configurar Axios para incluir credenciales
 window.axios.defaults.withCredentials = true;
 
-// Función global para actualizar el token CSRF
 window.updateCsrfToken = setupCsrfToken;
 
 // Interceptor para manejar errores CSRF

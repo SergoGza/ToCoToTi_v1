@@ -67,18 +67,15 @@ onMounted(() => {
 
     observer.observe(document.documentElement, { attributes: true });
 
-    // Limpiar el observer al desmontar el componente
     return () => observer.disconnect();
 });
 
-// Función para alternar el tema usando la función global
 const toggleTheme = () => {
     if (typeof window.toggleDarkMode === 'function') {
         window.toggleDarkMode();
     } else {
         console.error('La función toggleDarkMode no está disponible en el objeto window');
 
-        // Fallback si la función global no está disponible
         isDarkMode.value = !isDarkMode.value;
 
         if (isDarkMode.value) {

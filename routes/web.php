@@ -2,13 +2,11 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ItemController;
-use App\Http\Controllers\OfferController;
 use App\Http\Controllers\RequestController;
 use App\Http\Controllers\ItemInterestController;
-use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\MessageController;
-use App\Http\Controllers\WelcomeTourController; // Nueva importación
+use App\Http\Controllers\WelcomeTourController;
 use App\Models\Item;
 use App\Models\ItemInterest;
 use App\Models\Request as ItemRequest; // Usamos un alias para evitar conflicto con la clase Request de HTTP
@@ -85,16 +83,13 @@ Route::get('/dashboard', function () {
         'recentItems' => $recentItems,
         'recentRequests' => $recentRequests,
         'matchingItems' => $matchingItems,
-        'showWelcomeTour' => !$user->hasCompletedWelcomeTour(), // Nuevo: pasar si mostrar el tour
+        'showWelcomeTour' => !$user->hasCompletedWelcomeTour(),
     ]);
 })->middleware(['auth', 'verified'])->name('dashboard');
 
-// Rutas públicas para items - Modificado para evitar conflictos
+// Rutas públicas para items
 Route::get('items', [ItemController::class, 'index'])->name('items.index');
 
-
-// Rutas públicas para categorías
-Route::resource('categories', CategoryController::class)->only(['index', 'show']);
 
 // Rutas protegidas - requieren autenticación
 Route::middleware('auth')->group(function () {
@@ -103,7 +98,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // Rutas para items que requieren autenticación - Modificado para evitar conflictos
+    // Rutas para items que requieren autenticación
     Route::get('items/create', [ItemController::class, 'create'])->name('items.create');
     Route::post('items', [ItemController::class, 'store'])->name('items.store');
     Route::get('items/{item}/edit', [ItemController::class, 'edit'])->name('items.edit');
@@ -113,8 +108,6 @@ Route::middleware('auth')->group(function () {
     Route::patch('/items/{item}/status', [ItemController::class, 'updateStatus'])->name('items.updateStatus');
     Route::get('items/{item}', [ItemController::class, 'show'])->name('items.show');
 
-    // Rutas de ofertas
-    Route::resource('offers', OfferController::class);
 
     // Rutas de solicitudes
     Route::resource('requests', RequestController::class);

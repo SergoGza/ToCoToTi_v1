@@ -93,7 +93,7 @@ class NotificationService
     }
 
     /**
-     * Crear notificación cuando cambia el estado de un interés (versión mejorada)
+     * Crear notificación cuando cambia el estado de un interés
      */
     public static function createInterestStatusChangedNotification(ItemInterest $interest, $oldStatus, $newStatus)
     {

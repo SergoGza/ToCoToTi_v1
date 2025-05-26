@@ -24,9 +24,9 @@ const props = defineProps({
 // Estado para manejar errores de carga
 const imageError = ref(false);
 
-// Intenta diferentes nombres de archivo comunes
+
 const logoPath = [
-    '/logo-tocototi.png',
+    '/images/logo-tocototi.png',
    ];
 
 

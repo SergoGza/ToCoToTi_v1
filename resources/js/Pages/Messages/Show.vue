@@ -94,7 +94,6 @@ const form = useForm({
   content: ''
 });
 
-// Función para extraer correctamente el contenido del mensaje
 const extractMessageContent = (content) => {
   if (!content) return '';
 

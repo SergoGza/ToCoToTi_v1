@@ -172,7 +172,6 @@ const props = defineProps({
 // Copiar los filtros a un ref para poder modificarlos
 const filters = ref({...props.filters});
 
-// Método para realizar la búsqueda
 const search = () => {
     router.get(route('interests.index'), filters.value, {
         preserveState: true,
@@ -181,7 +180,6 @@ const search = () => {
     });
 };
 
-// Método para reiniciar filtros
 const resetFilters = () => {
     filters.value = {
         search: '',

@@ -151,7 +151,6 @@ const clearToasts = () => {
     }
 };
 
-// Métodos específicos por tipo
 const success = (message, duration = 5000) => addToast(message, 'success', duration);
 const error = (message, duration = 5000) => addToast(message, 'error', duration);
 const info = (message, duration = 5000) => addToast(message, 'info', duration);

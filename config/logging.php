@@ -64,7 +64,6 @@ return [
             'replace_placeholders' => true,
         ],
 
-        // Canal de logging para broadcasting añadido
         'broadcasting' => [
             'driver' => 'daily',
             'path' => storage_path('logs/broadcasting.log'),
@@ -89,8 +88,5 @@ return [
             'level' => env('LOG_LEVEL', 'critical'),
             'replace_placeholders' => true,
         ],
-
-        // Resto de configuraciones de canales...
-        // (he mantenido el resto del archivo original)
     ],
 ];

@@ -1,7 +1,7 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import WelcomeTour from '@/Components/WelcomeTour.vue';
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3'; // Agregamos router
 import { ref, computed, onMounted } from 'vue';
 
 // Props con datos del backend
@@ -41,45 +41,32 @@ const props = defineProps({
 const activeTab = ref('overview');
 const showTour = ref(props.showWelcomeTour);
 
-// Handlers para el tour
-const handleTourComplete = async () => {
-    try {
-        // Enviar petición al backend para marcar como completado
-        await fetch(route('welcome-tour.complete'), {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.head.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
-            }
-        });
-
-        showTour.value = false;
-
-        // Opcional: mostrar algún mensaje de confirmación
-        console.log('¡Tour completado! ¡Bienvenido a ToCoToTi!');
-    } catch (error) {
-        console.error('Error al completar el tour:', error);
-        // Aún así ocultar el tour para no bloquear al usuario
-        showTour.value = false;
-    }
+// Handlers para el tour - VERSIÓN CORREGIDA
+const handleTourComplete = () => {
+    router.post(route('welcome-tour.complete'), {}, {
+        onSuccess: () => {
+            showTour.value = false;
+            console.log('¡Tour completado exitosamente!');
+        },
+        onError: (errors) => {
+            console.error('Error al completar el tour:', errors);
+            // Aún así ocultar el tour para no bloquear al usuario
+            showTour.value = false;
+        }
+    });
 };
 
-const handleTourSkip = async () => {
-    try {
-        // También marcar como completado cuando se salta
-        await fetch(route('welcome-tour.complete'), {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.head.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
-            }
-        });
-
-        showTour.value = false;
-    } catch (error) {
-        console.error('Error al saltar el tour:', error);
-        showTour.value = false;
-    }
+const handleTourSkip = () => {
+    router.post(route('welcome-tour.complete'), {}, {
+        onSuccess: () => {
+            showTour.value = false;
+            console.log('Tour saltado exitosamente');
+        },
+        onError: (errors) => {
+            console.error('Error al saltar el tour:', errors);
+            showTour.value = false;
+        }
+    });
 };
 </script>
 

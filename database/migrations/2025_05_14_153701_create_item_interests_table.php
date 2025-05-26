@@ -9,7 +9,6 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-// database/migrations/xxxx_xx_xx_create_item_interests_table.php
     public function up()
     {
         Schema::create('item_interests', function (Blueprint $table) {

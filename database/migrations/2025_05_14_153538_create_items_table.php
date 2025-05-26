@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained();
 
-            // Es crucial que category_id sea del mismo tipo que id en categories
+
             $table->unsignedBigInteger('category_id')->nullable();
 
             $table->string('title');
@@ -29,7 +29,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // Definimos la clave foránea separadamente después de crear la tabla
+
         Schema::table('items', function (Blueprint $table) {
             $table->foreign('category_id')
                 ->references('id')
