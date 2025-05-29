@@ -78,7 +78,7 @@ const handleTourSkip = () => {
             <div class="flex justify-between items-center">
                 <div>
                     <h2 class="font-semibold text-xl text-[#333333] leading-tight">
-                        ¡Hola, {{ $page.props.auth.user.name }}! 👋
+                        ¡Hola, {{ $page.props.auth.user.name }}!
                     </h2>
                     <p class="text-[#825028] text-sm mt-1">Bienvenido a tu espacio de intercambio</p>
                 </div>

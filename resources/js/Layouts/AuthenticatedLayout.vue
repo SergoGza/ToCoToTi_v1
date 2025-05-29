@@ -19,29 +19,21 @@
                         <div class="flex">
                             <!-- Logo -->
                             <div class="flex shrink-0 items-center">
-                                <Link :href="route('dashboard')">
+                                <Link :href="route('home')">
                                     <ApplicationLogo />
                                 </Link>
                             </div>
 
                             <!-- Navigation Links -->
                             <div
-                                class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex"
+                                class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex sm:items-center"
                             >
-                                <NavLink
-                                    :href="route('dashboard')"
-                                    :active="route().current('dashboard')"
-                                    class="nav-link"
-                                >
-                                    🏠 Inicio
-                                </NavLink>
-
                                 <NavLink
                                     :href="route('items.my')"
                                     :active="route().current('items.my')"
                                     class="nav-link"
                                 >
-                                    📦 Todo Tiro
+                                    Todo Tiro
                                 </NavLink>
 
                                 <NavLink
@@ -49,7 +41,7 @@
                                     :active="route().current('items.index')"
                                     class="nav-link"
                                 >
-                                    🎯 Todo Cojo
+                                    Todo Cojo
                                 </NavLink>
 
                                 <NavLink
@@ -57,7 +49,7 @@
                                     :active="route().current('requests.my')"
                                     class="nav-link"
                                 >
-                                    🙋 Todo Pido
+                                    Todo Pido
                                 </NavLink>
 
                                 <NavLink
@@ -65,11 +57,11 @@
                                     :active="route().current('requests.index')"
                                     class="nav-link"
                                 >
-                                    👥 Comunidad
+                                    Comunidad
                                 </NavLink>
 
-                                <!-- Dropdown de Intereses -->
-                                <div class="relative">
+                                <!-- Dropdown de Intereses - ALINEACIÓN CORREGIDA -->
+                                <div class="relative flex items-center">
                                     <Dropdown align="left" width="48">
                                         <template #trigger>
                                             <button
@@ -80,7 +72,7 @@
                                                     'border-transparent text-[#333333]': !route().current('interests.*')
                                                 }"
                                             >
-                                                💝 Intereses
+                                                Intereses
                                                 <svg
                                                     class="-me-1 ms-2 h-4 w-4"
                                                     xmlns="http://www.w3.org/2000/svg"
@@ -218,46 +210,40 @@
                 >
                     <div class="space-y-1 pb-3 pt-2">
                         <ResponsiveNavLink
-                            :href="route('dashboard')"
-                            :active="route().current('dashboard')"
-                        >
-                            🏠 Inicio
-                        </ResponsiveNavLink>
-                        <ResponsiveNavLink
                             :href="route('items.my')"
                             :active="route().current('items.my')"
                         >
-                            📦 Todo Tiro
+                            Todo Tiro
                         </ResponsiveNavLink>
                         <ResponsiveNavLink
                             :href="route('items.index')"
                             :active="route().current('items.index')"
                         >
-                            🎯 Todo Cojo
+                            Todo Cojo
                         </ResponsiveNavLink>
                         <ResponsiveNavLink
                             :href="route('requests.my')"
                             :active="route().current('requests.my')"
                         >
-                            🙋 Todo Pido
+                            Todo Pido
                         </ResponsiveNavLink>
                         <ResponsiveNavLink
                             :href="route('requests.index')"
                             :active="route().current('requests.index')"
                         >
-                            👥 Comunidad
+                            Comunidad
                         </ResponsiveNavLink>
                         <ResponsiveNavLink
                             :href="route('interests.index')"
                             :active="route().current('interests.index')"
                         >
-                            💝 Mis Intereses
+                            Mis Intereses
                         </ResponsiveNavLink>
                         <ResponsiveNavLink
                             :href="route('interests.received')"
                             :active="route().current('interests.received')"
                         >
-                            💝 Quién lo Quiere
+                            Quién lo Quiere
                         </ResponsiveNavLink>
 
                         <ResponsiveNavLink

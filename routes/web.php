@@ -15,17 +15,19 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-// Ruta principal
+// Ruta principal - Ahora el dashboard es la página de inicio
 Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
-});
+    // Si el usuario no está autenticado, mostrar welcome
+    if (!Auth::check()) {
+        return Inertia::render('Welcome', [
+            'canLogin' => Route::has('login'),
+            'canRegister' => Route::has('register'),
+            'laravelVersion' => Application::VERSION,
+            'phpVersion' => PHP_VERSION,
+        ]);
+    }
 
-Route::get('/dashboard', function () {
+    // Si está autenticado, mostrar el dashboard
     $user = Auth::user();
 
     // Estadísticas del usuario
@@ -85,7 +87,10 @@ Route::get('/dashboard', function () {
         'matchingItems' => $matchingItems,
         'showWelcomeTour' => !$user->hasCompletedWelcomeTour(),
     ]);
-})->middleware(['auth', 'verified'])->name('dashboard');
+})->name('home');
+
+
+Route::redirect('/dashboard', '/')->name('dashboard');
 
 // Rutas públicas para items
 Route::get('items', [ItemController::class, 'index'])->name('items.index');
@@ -98,7 +103,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // Rutas para items que requieren autenticación
-    Route::get('items/my', [ItemController::class, 'myItems'])->name('items.my'); // NUEVA RUTA
+    Route::get('items/my', [ItemController::class, 'myItems'])->name('items.my');
     Route::get('items/create', [ItemController::class, 'create'])->name('items.create');
     Route::post('items', [ItemController::class, 'store'])->name('items.store');
     Route::get('items/{item}/edit', [ItemController::class, 'edit'])->name('items.edit');
