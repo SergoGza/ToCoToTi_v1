@@ -6,7 +6,7 @@
         <template #header>
             <div class="flex justify-between items-center">
                 <div>
-                    <h2 class="font-semibold text-xl text-[#333333] leading-tight">🎯 Todo Cojo</h2>
+                    <h2 class="font-semibold text-xl text-[#333333] leading-tight">Todo Cojo</h2>
                     <p class="text-[#825028] text-sm mt-1">Descubre los tesoros que otros han compartido</p>
                 </div>
                 <Link
@@ -118,7 +118,7 @@
 
                                     <div class="flex space-x-2">
                                         <PrimaryButton type="submit">
-                                            🔍 Buscar
+                                            Buscar
                                         </PrimaryButton>
                                         <SecondaryButton type="button" @click="resetFilters">
                                             Limpiar filtros
@@ -145,7 +145,7 @@
                                     :href="route('requests.create')"
                                     class="inline-flex items-center px-4 py-2 bg-[#825028] text-white rounded-lg hover:bg-[#6b3f1f] transition-colors duration-200"
                                 >
-                                    🙋 Crear solicitud
+                                    Crear solicitud
                                 </Link>
                             </div>
                         </div>
@@ -162,7 +162,7 @@
                                     :href="route('requests.create')"
                                     class="text-sm text-[#825028] hover:text-[#6b3f1f] transition-colors duration-200"
                                 >
-                                    ¿No encuentras lo que buscas? 🙋 Créalo como solicitud
+                                    ¿No encuentras lo que buscas? Créalo como solicitud
                                 </Link>
                             </div>
 

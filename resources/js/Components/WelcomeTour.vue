@@ -108,7 +108,7 @@
                         @click="completeTour"
                         class="px-6 py-2 bg-[#00913F] text-white rounded-lg hover:bg-[#007833] transition-colors duration-200"
                     >
-                        ¡Empezar! 🚀
+                        ¡Empezar!
                     </button>
                 </div>
             </div>

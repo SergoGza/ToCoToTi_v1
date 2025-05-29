@@ -20,14 +20,12 @@
                             <!-- Logo -->
                             <div class="flex shrink-0 items-center">
                                 <Link :href="route('home')">
-                                    <ApplicationLogo />
+                                    <ApplicationLogo/>
                                 </Link>
                             </div>
 
                             <!-- Navigation Links -->
-                            <div
-                                class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex sm:items-center"
-                            >
+                            <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex sm:items-center">
                                 <NavLink
                                     :href="route('items.my')"
                                     :active="route().current('items.my')"
@@ -61,16 +59,16 @@
                                 </NavLink>
 
                                 <!-- Dropdown de Intereses - ALINEACIÓN CORREGIDA -->
-                                <div class="relative flex items-center">
+                                <div class="relative">
                                     <Dropdown align="left" width="48">
                                         <template #trigger>
                                             <button
                                                 type="button"
-                                                class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium leading-5 text-[#333333] hover:text-[#00913F] hover:border-[#00913F]/30 focus:outline-none focus:text-[#00913F] focus:border-[#00913F]/30 transition duration-150 ease-in-out"
+                                                class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium leading-5 transition duration-150 ease-in-out"
                                                 :class="{
-                                                    'border-[#00913F] text-[#00913F]': route().current('interests.*'),
-                                                    'border-transparent text-[#333333]': !route().current('interests.*')
-                                                }"
+                        'border-[#00913F] text-[#00913F] font-semibold': route().current('interests.*'),
+                        'border-transparent text-[#333333] hover:text-[#00913F] hover:border-[#00913F]/30 focus:outline-none focus:text-[#00913F] focus:border-[#00913F]/30': !route().current('interests.*')
+                    }"
                                             >
                                                 Intereses
                                                 <svg
@@ -104,13 +102,13 @@
                         <div class="hidden sm:ms-6 sm:flex sm:items-center">
 
                             <!-- Dark Mode Toggle -->
-                            <DarkModeToggle class="mr-3" />
+                            <DarkModeToggle class="mr-3"/>
 
                             <!-- Notificaciones Dropdown -->
-                            <NotificationDropdown />
+                            <NotificationDropdown/>
 
                             <!-- Notificación de Mensajes -->
-                            <MessageNotification class="mr-3" />
+                            <MessageNotification class="mr-3"/>
 
                             <!-- Settings Dropdown -->
                             <div class="relative ms-3">
@@ -291,27 +289,27 @@
                 v-if="$slots.header"
             >
                 <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-                    <slot name="header" />
+                    <slot name="header"/>
 
                     <!-- Breadcrumb (Solo se muestra si se proporcionan breadcrumbItems) -->
-                    <Breadcrumb v-if="breadcrumbItems && breadcrumbItems.length" :items="breadcrumbItems" class="mt-2" />
+                    <Breadcrumb v-if="breadcrumbItems && breadcrumbItems.length" :items="breadcrumbItems" class="mt-2"/>
                 </div>
             </header>
 
             <!-- Page Content -->
             <main>
-                <slot />
+                <slot/>
             </main>
         </div>
 
         <!-- Componentes de UI -->
-        <LoadingIndicator ref="loadingIndicator" />
-        <ToastNotification ref="toastNotification" />
+        <LoadingIndicator ref="loadingIndicator"/>
+        <ToastNotification ref="toastNotification"/>
     </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import {ref, onMounted} from 'vue';
 import ApplicationLogo from '@/Components/ApplicationLogo.vue';
 import Dropdown from '@/Components/Dropdown.vue';
 import DropdownLink from '@/Components/DropdownLink.vue';
@@ -322,7 +320,7 @@ import LoadingIndicator from '@/Components/LoadingIndicator.vue';
 import ToastNotification from '@/Components/ToastNotification.vue';
 import Breadcrumb from '@/Components/Breadcrumb.vue';
 import DarkModeToggle from '@/Components/DarkModeToggle.vue';
-import { Link, usePage } from '@inertiajs/vue3';
+import {Link, usePage} from '@inertiajs/vue3';
 import axios from 'axios';
 import MessageNotification from '@/Components/MessageNotification.vue';
 
@@ -347,7 +345,7 @@ const showToast = (message, type = 'info', duration = 5000) => {
     } else {
         window.dispatchEvent(
             new CustomEvent('add-toast', {
-                detail: { message, type, duration }
+                detail: {message, type, duration}
             })
         );
     }
@@ -359,7 +357,7 @@ const showGlobalLoading = (message = 'Cargando...') => {
     } else {
         window.dispatchEvent(
             new CustomEvent('show-loading', {
-                detail: { message }
+                detail: {message}
             })
         );
     }

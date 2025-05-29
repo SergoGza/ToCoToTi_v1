@@ -6,7 +6,7 @@
         <template #header>
             <div class="flex justify-between items-center">
                 <div>
-                    <h2 class="font-semibold text-xl text-[#333333] leading-tight">📦 Todo Tiro</h2>
+                    <h2 class="font-semibold text-xl text-[#333333] leading-tight">Todo Tiro</h2>
                     <p class="text-[#825028] text-sm mt-1">Los items que has compartido con la comunidad</p>
                 </div>
                 <Link
