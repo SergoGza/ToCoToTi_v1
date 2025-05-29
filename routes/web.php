@@ -90,7 +90,6 @@ Route::get('/dashboard', function () {
 // Rutas públicas para items
 Route::get('items', [ItemController::class, 'index'])->name('items.index');
 
-
 // Rutas protegidas - requieren autenticación
 Route::middleware('auth')->group(function () {
     // Perfil de usuario
@@ -99,6 +98,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // Rutas para items que requieren autenticación
+    Route::get('items/my', [ItemController::class, 'myItems'])->name('items.my'); // NUEVA RUTA
     Route::get('items/create', [ItemController::class, 'create'])->name('items.create');
     Route::post('items', [ItemController::class, 'store'])->name('items.store');
     Route::get('items/{item}/edit', [ItemController::class, 'edit'])->name('items.edit');
@@ -107,7 +107,6 @@ Route::middleware('auth')->group(function () {
     Route::delete('items/{item}', [ItemController::class, 'destroy'])->name('items.destroy');
     Route::patch('/items/{item}/status', [ItemController::class, 'updateStatus'])->name('items.updateStatus');
     Route::get('items/{item}', [ItemController::class, 'show'])->name('items.show');
-
 
     // Rutas de solicitudes
     Route::resource('requests', RequestController::class);
@@ -140,7 +139,7 @@ Route::middleware('auth')->group(function () {
         return response()->json(['count' => $count]);
     })->name('api.unreadMessages');
 
-    // Nuevas rutas para el tour de bienvenida
+    // Rutas para el tour de bienvenida
     Route::post('/welcome-tour/complete', [WelcomeTourController::class, 'complete'])->name('welcome-tour.complete');
     Route::get('/api/welcome-tour/status', [WelcomeTourController::class, 'status'])->name('api.welcome-tour.status');
 });

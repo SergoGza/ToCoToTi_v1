@@ -71,7 +71,7 @@ const handleTourSkip = () => {
 </script>
 
 <template>
-    <Head title="Dashboard" />
+    <Head title="Inicio" />
 
     <AuthenticatedLayout>
         <template #header>
@@ -90,7 +90,7 @@ const handleTourSkip = () => {
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                         </svg>
-                        Publicar ítem
+                        Tirar algo
                     </Link>
                     <Link
                         :href="route('requests.create')"
@@ -99,7 +99,7 @@ const handleTourSkip = () => {
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                         </svg>
-                        Crear solicitud
+                        Pedir algo
                     </Link>
                 </div>
             </div>
@@ -118,7 +118,7 @@ const handleTourSkip = () => {
                                 </svg>
                             </div>
                             <div class="ml-4">
-                                <p class="text-sm text-[#825028]">Items publicados</p>
+                                <p class="text-sm text-[#825028]">Cosas que tiro</p>
                                 <p class="text-2xl font-semibold text-[#333333]">{{ props.stats.itemsPublished }}</p>
                             </div>
                         </div>
@@ -133,7 +133,7 @@ const handleTourSkip = () => {
                                 </svg>
                             </div>
                             <div class="ml-4">
-                                <p class="text-sm text-[#825028]">Items entregados</p>
+                                <p class="text-sm text-[#825028]">Cosas entregadas</p>
                                 <p class="text-2xl font-semibold text-[#333333]">{{ props.stats.itemsGiven }}</p>
                             </div>
                         </div>
@@ -148,7 +148,7 @@ const handleTourSkip = () => {
                                 </svg>
                             </div>
                             <div class="ml-4">
-                                <p class="text-sm text-[#825028]">Solicitudes activas</p>
+                                <p class="text-sm text-[#825028]">Cosas que pido</p>
                                 <p class="text-2xl font-semibold text-[#333333]">{{ props.stats.requestsActive }}</p>
                             </div>
                         </div>
@@ -163,7 +163,7 @@ const handleTourSkip = () => {
                                 </svg>
                             </div>
                             <div class="ml-4">
-                                <p class="text-sm text-[#825028]">Intereses recibidos</p>
+                                <p class="text-sm text-[#825028]">Quién lo quiere</p>
                                 <p class="text-2xl font-semibold text-[#333333]">{{ props.stats.interestsReceived }}</p>
                             </div>
                         </div>
@@ -194,7 +194,7 @@ const handleTourSkip = () => {
                                     'py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200'
                                 ]"
                             >
-                                Mis items
+                                Lo que tiro
                             </button>
                             <button
                                 @click="activeTab = 'recommendations'"
@@ -215,7 +215,7 @@ const handleTourSkip = () => {
                         <div v-if="activeTab === 'overview'" class="space-y-6">
                             <!-- Items recientes en la comunidad -->
                             <div>
-                                <h3 class="text-lg font-semibold text-[#333333] mb-4">Items recientes en la comunidad</h3>
+                                <h3 class="text-lg font-semibold text-[#333333] mb-4">Cosas que la gente está tirando</h3>
                                 <div v-if="recentItems.length > 0" class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <Link
                                         v-for="item in recentItems.slice(0, 3)"
@@ -237,13 +237,13 @@ const handleTourSkip = () => {
                                     </Link>
                                 </div>
                                 <div v-else class="text-center py-8 text-gray-500">
-                                    <p>No hay items recientes</p>
+                                    <p>No hay cosas recientes que se estén tirando</p>
                                 </div>
                             </div>
 
                             <!-- Solicitudes recientes -->
                             <div>
-                                <h3 class="text-lg font-semibold text-[#333333] mb-4">Solicitudes recientes de la comunidad</h3>
+                                <h3 class="text-lg font-semibold text-[#333333] mb-4">Cosas que la gente está pidiendo</h3>
                                 <div v-if="recentRequests.length > 0" class="space-y-3">
                                     <Link
                                         v-for="request in recentRequests.slice(0, 3)"
@@ -254,7 +254,7 @@ const handleTourSkip = () => {
                                         <div class="flex justify-between items-start">
                                             <div>
                                                 <h4 class="font-semibold text-[#333333]">{{ request.title }}</h4>
-                                                <p class="text-sm text-[#825028] mt-1">Solicitado por {{ request.user.name }}</p>
+                                                <p class="text-sm text-[#825028] mt-1">Pedido por {{ request.user.name }}</p>
                                                 <p class="text-sm text-gray-600 mt-2 line-clamp-2">{{ request.description }}</p>
                                             </div>
                                             <span class="bg-[#00913F]/20 text-[#00913F] px-2 py-1 rounded text-xs font-semibold">
@@ -264,7 +264,7 @@ const handleTourSkip = () => {
                                     </Link>
                                 </div>
                                 <div v-else class="text-center py-8 text-gray-500">
-                                    <p>No hay solicitudes recientes</p>
+                                    <p>No hay peticiones recientes</p>
                                 </div>
                             </div>
                         </div>
@@ -311,19 +311,19 @@ const handleTourSkip = () => {
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-400 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                                 </svg>
-                                <p class="text-gray-500 mb-4">Aún no has publicado ningún item</p>
+                                <p class="text-gray-500 mb-4">Aún no has tirado nada</p>
                                 <Link
                                     :href="route('items.create')"
                                     class="inline-flex items-center px-4 py-2 bg-[#00913F] text-white rounded-lg hover:bg-[#007833] transition-colors duration-200"
                                 >
-                                    Publicar mi primer item
+                                    Tirar mi primera cosa
                                 </Link>
                             </div>
                         </div>
 
                         <!-- Recomendaciones -->
                         <div v-if="activeTab === 'recommendations'" class="space-y-6">
-                            <p class="text-[#825028] mb-4">Items que podrían interesarte según tus búsquedas</p>
+                            <p class="text-[#825028] mb-4">Cosas que podrían interesarte según tus búsquedas</p>
                             <div v-if="matchingItems.length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <Link
                                     v-for="item in matchingItems"
@@ -355,7 +355,7 @@ const handleTourSkip = () => {
                                     :href="route('items.index')"
                                     class="text-[#00913F] hover:text-[#007833] font-semibold"
                                 >
-                                    Explorar todos los items
+                                    Explorar todo lo que se tira
                                 </Link>
                             </div>
                         </div>

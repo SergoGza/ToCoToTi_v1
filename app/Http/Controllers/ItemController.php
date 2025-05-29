@@ -335,4 +335,66 @@ class ItemController extends Controller
 
         return $statusMap[$status] ?? $status;
     }
+
+
+
+    /*
+     * Mostrar los items del usuario autenticado (Todo Tiro)
+     */
+    public function myItems(Request $request)
+    {
+        $user = auth()->user();
+
+        // Obtener filtros
+        $search = $request->get('search');
+        $categoryId = $request->get('category');
+        $status = $request->get('status');
+
+        // Query base para los items del usuario
+        $query = Item::where('user_id', $user->id)
+            ->with(['category', 'user'])
+            ->withCount('interests');
+
+        // Aplicar filtros
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%");
+            });
+        }
+
+        if ($categoryId) {
+            $query->where('category_id', $categoryId);
+        }
+
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        // Obtener items paginados
+        $items = $query->latest()->paginate(10)->withQueryString();
+
+        // Estadísticas del usuario
+        $stats = [
+            'total' => Item::where('user_id', $user->id)->count(),
+            'available' => Item::where('user_id', $user->id)->where('status', 'available')->count(),
+            'reserved' => Item::where('user_id', $user->id)->where('status', 'reserved')->count(),
+            'given' => Item::where('user_id', $user->id)->where('status', 'given')->count(),
+        ];
+
+        // Obtener categorías para el filtro
+        $categories = Category::orderBy('name')->get();
+
+        return Inertia::render('Items/MyItems', [
+            'items' => $items,
+            'stats' => $stats,
+            'categories' => $categories,
+            'filters' => [
+                'search' => $search,
+                'category' => $categoryId,
+                'status' => $status
+            ]
+        ]);
+    }
+
 }
