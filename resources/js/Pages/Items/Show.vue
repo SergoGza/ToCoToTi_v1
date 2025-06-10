@@ -43,13 +43,13 @@
                                     <ItemStatusBadge :status="item.status" />
                                 </div>
                                 <p class="mb-2 text-sm bg-blue-100 text-blue-800 inline-block px-2 py-1 rounded">
-                                    {{ item.category ? item.category.name : 'Sin categoría' }}
+                                    {{ item.category?.name || 'Sin categoría' }}
                                 </p>
                                 <p class="mb-2 text-sm bg-gray-100 inline-block px-2 py-1 rounded">
                                     Condición: {{ formatCondition(item.condition) }}
                                 </p>
                                 <p class="mb-4 text-sm">
-                                    Publicado por: {{ item.user.name }}
+                                    Publicado por: {{ item.user?.name || 'Usuario desconocido' }}
                                 </p>
 
                                 <!-- Botón para contactar con el propietario -->
@@ -61,7 +61,7 @@
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
                                             <path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clip-rule="evenodd" />
                                         </svg>
-                                        Contactar con {{ item.user.name }}
+                                        Contactar con {{ item.user?.name || 'Usuario' }}
                                     </Link>
                                 </div>
 
@@ -133,7 +133,7 @@
                                         <h3 class="font-semibold mb-2">Personas interesadas:</h3>
                                         <div v-for="interest in item.interests" :key="interest.id" class="p-4 border rounded-lg mb-2">
                                             <div class="flex justify-between">
-                                                <p class="font-medium">{{ interest.user.name }}</p>
+                                                <p class="font-medium">{{ interest.user?.name || 'Usuario desconocido' }}</p>
 
                                                 <!-- Botón para contactar con persona interesada -->
                                                 <Link
@@ -177,7 +177,7 @@
                                 <div v-for="request in matchingRequests" :key="request.id" class="border rounded-lg p-4">
                                     <h4 class="font-bold">{{ request.title }}</h4>
                                     <p class="text-sm text-gray-600 mb-2">
-                                        Solicitado por: {{ request.user.name }}
+                                        Solicitado por: {{ request.user?.name || 'Usuario desconocido' }}
                                     </p>
                                     <p class="text-sm line-clamp-2 mb-3">{{ request.description }}</p>
                                     <Link
