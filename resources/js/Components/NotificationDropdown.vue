@@ -202,7 +202,12 @@ onMounted(() => {
 const fetchNotifications = async () => {
     loading.value = true;
     try {
-        const response = await axios.get(route('api.unreadNotifications'));
+        const response = await axios.get(route('api.unreadNotifications'), {
+                headers: {
+                    'X-Silent-Request': true
+                }
+            }
+        );
         notifications.value = response.data.notifications;
         unreadCount.value = response.data.count;
     } catch (error) {
